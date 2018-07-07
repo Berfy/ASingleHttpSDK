@@ -5,6 +5,7 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -85,5 +86,19 @@ public class AWebView extends WebView {
     public void loadUrl(String url) {
         Log.i(TAG, "加载网址" + url);
         super.loadUrl(url);
+    }
+
+    @Override
+    public void destroy() {
+        getSettings().setBuiltInZoomControls(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            // call requies API Level 11 ( Android 3.0 + )
+            getSettings().setDisplayZoomControls(false);
+        }
+        setVisibility(View.GONE);
+        pauseTimers();
+        ViewGroup view = (ViewGroup) getRootView();
+        view.removeAllViews();
+        super.destroy();
     }
 }

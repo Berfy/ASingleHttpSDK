@@ -8,16 +8,12 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PaintFlagsDrawFilter;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
+import android.view.View;
 
 import com.axingxing.demohttp.R;
-
-import cn.berfy.sdk.http.http.okhttp.utils.LogF;
 
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -25,11 +21,9 @@ import java.util.List;
 import java.util.Random;
 
 
-public class WaterWaveView extends SurfaceView {
+public class WaterWaveView extends View {
 
     private Context mContext;
-    private SurfaceHolder mSurfaceHolder = null;
-    private boolean mStarted = false;
     private final Paint mPaint1 = new Paint();//远处
     private final Paint mPaint2 = new Paint();//近处
     private boolean mIsRun;
@@ -66,23 +60,6 @@ public class WaterWaveView extends SurfaceView {
     }
 
     private void init() {
-        mSurfaceHolder = getHolder();
-        mSurfaceHolder.addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
-            }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-
-            }
-        });
         mDrawFilter = new PaintFlagsDrawFilter(Paint.ANTI_ALIAS_FLAG,
                 Paint.DITHER_FLAG);
         mPaint1.setAlpha(150);
@@ -94,13 +71,12 @@ public class WaterWaveView extends SurfaceView {
     }
 
     public void startWave() {
+        setLayerType(View.LAYER_TYPE_HARDWARE, null);
         if (null != mWaters) {
             mWaters.clear();
         }
-        setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        if (!mStarted) {
+        if (!mIsRun) {
             mIsRun = true;
-            mStarted = true;
             mRefreshThread1 = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -122,7 +98,7 @@ public class WaterWaveView extends SurfaceView {
                                     if (mIsScrollToDown) {
                                         water.size += 0.0005;
                                     } else {
-                                        water.size -= 0.0005;
+                                        water.size += 0.0005;
                                     }
                                     if (mIsScrollToDown && water.y > trueHeight + 50) {
                                         water.x = mRandom.nextInt(mWidth);
@@ -131,8 +107,8 @@ public class WaterWaveView extends SurfaceView {
                                         water.rawTime = System.currentTimeMillis();
                                     } else if (!mIsScrollToDown && water.y < -50) {
                                         water.x = mRandom.nextInt(mWidth);
-                                        water.y = trueHeight + mRandom.nextInt((int) (mHeight * mLevel));
-                                        water.size = 0.3f;
+                                        water.y = trueHeight + 50 + mRandom.nextInt((int) (mHeight * mLevel));
+                                        water.size = 0.01f;
                                         water.rawTime = System.currentTimeMillis();
                                     }
                                     double moveTime = (System.currentTimeMillis() * 0.1 - water.rawTime * 0.1);
@@ -177,7 +153,7 @@ public class WaterWaveView extends SurfaceView {
                                     if (mIsScrollToDown) {
                                         water.size += 0.0004;
                                     } else {
-                                        water.size -= 0.0004;
+                                        water.size += 0.0004;
                                     }
                                     if (mIsScrollToDown && water.y > trueHeight + 50) {
                                         water.x = mRandom.nextInt(mWidth);
@@ -186,8 +162,8 @@ public class WaterWaveView extends SurfaceView {
                                         water.rawTime = System.currentTimeMillis();
                                     } else if (!mIsScrollToDown && water.y < -50) {
                                         water.x = mRandom.nextInt(mWidth);
-                                        water.y = trueHeight + mRandom.nextInt((int) (mHeight * mLevel));
-                                        water.size = 0.3f;
+                                        water.y = trueHeight + 50 + mRandom.nextInt((int) (mHeight * mLevel));
+                                        water.size = 0.01f;
                                         water.rawTime = System.currentTimeMillis();
                                     }
                                     double moveTime = (System.currentTimeMillis() * 0.1 - water.rawTime * 0.1);
@@ -232,7 +208,7 @@ public class WaterWaveView extends SurfaceView {
                                     if (mIsScrollToDown) {
                                         water.size += 0.0002;
                                     } else {
-                                        water.size -= 0.0002;
+                                        water.size += 0.0002;
                                     }
                                     if (mIsScrollToDown && water.y > trueHeight + 50) {
                                         water.x = mRandom.nextInt(mWidth);
@@ -241,8 +217,8 @@ public class WaterWaveView extends SurfaceView {
                                         water.rawTime = System.currentTimeMillis();
                                     } else if (!mIsScrollToDown && water.y < -50) {
                                         water.x = mRandom.nextInt(mWidth);
-                                        water.y = trueHeight + mRandom.nextInt((int) (mHeight * mLevel));
-                                        water.size = 0.3f;
+                                        water.y = trueHeight + 50 + mRandom.nextInt((int) (mHeight * mLevel));
+                                        water.size = 0.01f;
                                         water.rawTime = System.currentTimeMillis();
                                     }
                                     double moveTime = (System.currentTimeMillis() * 0.1 - water.rawTime * 0.1);
@@ -273,10 +249,7 @@ public class WaterWaveView extends SurfaceView {
                 }
             });
             mRefreshThread3.start();
-
-            mAddThread = new
-
-                    Thread(new Runnable() {
+            mAddThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     // TODO Auto-generated method stub
@@ -290,7 +263,7 @@ public class WaterWaveView extends SurfaceView {
                                 water.y = mRandom.nextInt(mHeight / 4);
                                 water.rawTime = System.currentTimeMillis() - (long) (3000 * ((water.y * 0.1) / (mHeight * 0.1)));
                                 mAddWaters.add(water);
-                                LogF.d("水滴增加", " " + water.x + "," + water.y + "  " + water.size);
+//                                LogF.d("水滴增加", " " + water.x + "," + water.y + "  " + water.size);
 //                                    mHandler.sendEmptyMessage(0);
 //                                    postInvalidate();
                             }
@@ -305,7 +278,7 @@ public class WaterWaveView extends SurfaceView {
             });
             mAddThread.start();
         }
-        mHandler.sendEmptyMessageDelayed(1, 10000);
+//        mHandler.sendEmptyMessageDelayed(1, 10000);
     }
 
     private Handler mHandler = new Handler() {
@@ -317,8 +290,8 @@ public class WaterWaveView extends SurfaceView {
                     invalidate();
                     break;
                 case 1:
-                    mIsScrollToDown = !mIsScrollToDown;
-                    mHandler.sendEmptyMessageDelayed(1, 10000);
+//                    mIsScrollToDown = !mIsScrollToDown;
+//                    mHandler.sendEmptyMessageDelayed(1, 10000);
                     break;
             }
         }
@@ -328,7 +301,6 @@ public class WaterWaveView extends SurfaceView {
     public void onDraw(Canvas canvas) {
         // TODO Auto-generated method stub
         super.onDraw(canvas);
-//        canvas = mSurfaceHolder.lockCanvas();
         canvas.setDrawFilter(mDrawFilter);
         canvas.drawColor(Color.WHITE);
         mWidth = getWidth();
@@ -373,10 +345,10 @@ public class WaterWaveView extends SurfaceView {
                     (int) (lineY2 + mHeight * (1 - mLevel)), (int) lineX2,
                     mHeight, mPaint2);
         }
-//        mSurfaceHolder.unlockCanvasAndPost(canvas);
     }
 
     public void stop() {
+        setLayerType(View.LAYER_TYPE_NONE, null);
         for (Water water : mWaters) {
             water.water.recycle();
         }
@@ -388,16 +360,25 @@ public class WaterWaveView extends SurfaceView {
         mIsRun = false;
         if (null != mRefreshThread1) {
             mRefreshThread1.interrupt();
+            mRefreshThread1 = null;
         }
         if (null != mRefreshThread2) {
             mRefreshThread2.interrupt();
+            mRefreshThread2 = null;
         }
         if (null != mRefreshThread3) {
             mRefreshThread3.interrupt();
+            mRefreshThread3 = null;
         }
         if (null != mAddThread) {
             mAddThread.interrupt();
+            mAddThread = null;
         }
+        System.gc();
+    }
+
+    public boolean isRunning() {
+        return mIsRun;
     }
 
     public static class Water {

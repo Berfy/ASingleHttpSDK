@@ -40,8 +40,11 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private AWebView mWebView;
+    private AWebView mWebView1;
+    private AWebView mWebView2;
     private EditText mEditMd5;
+    private WaterWaveView mWaterWaveView;
+    private Button mBtnAnim;
     private Button mBtnMd5;
     private Button mBtnMd5Java;
     private Button mBtnMd5HmacJava;
@@ -65,9 +68,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) ((WaterWaveView) findViewById(R.id.waterWaveView)).getLayoutParams();
         layoutParams.width = RelativeLayout.LayoutParams.MATCH_PARENT;
         layoutParams.height = DisplayUtil.getDisplayHeight(this);
-        ((WaterWaveView) findViewById(R.id.waterWaveView)).setLayoutParams(layoutParams);
-        ((WaterWaveView) findViewById(R.id.waterWaveView)).startWave();
-        mWebView = findViewById(R.id.webView);
+        mWaterWaveView = findViewById(R.id.waterWaveView);
+        mWaterWaveView.setLayoutParams(layoutParams);
+        mWaterWaveView.startWave();
+        mWebView1 = findViewById(R.id.webView1);
+        mWebView2 = findViewById(R.id.webView2);
         mEditMd5 = findViewById(R.id.edit_md5);
         mTvMd5 = findViewById(R.id.tv_md5);
         mBtnMd5 = findViewById(R.id.btn_md5_c);
@@ -78,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mTvHttp = findViewById(R.id.tv_response);
         mBtnHttpGET = findViewById(R.id.btn_http_get);
         mBtnHttpPOST = findViewById(R.id.btn_http_post);
+        mBtnAnim = findViewById(R.id.btn_anim);
+        mBtnAnim.setOnClickListener(this);
         mBtnMd5.setOnClickListener(this);
         mBtnMd5Java.setOnClickListener(this);
         mBtnMd5HmacJava.setOnClickListener(this);
@@ -126,7 +133,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 })
                 .setLogTAG("httpLog")
                 .finish();
-        mWebView.setWebViewClient(new WebViewClient() {
+        mWebView1.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+            }
+
+            @Override
+            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                super.onReceivedSslError(view, handler, error);
+                handler.proceed();  // 接受所有网站的证书
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                view.loadUrl(url);
+                return false;
+            }
+
+            //是否在webview内加载页面
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    view.loadUrl(request.getUrl().toString());
+                } else {
+                    view.loadUrl(request.toString());
+                }
+                return false;
+            }
+        });
+        mWebView2.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
@@ -172,8 +218,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            mWebView.loadUrl("http://446296114.blog.163.com/");
-//            sendEmptyMessageDelayed(0, 2000);
+            mWebView1.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xuwi.html");
+            mWebView2.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xu8b.html");
+            sendEmptyMessageDelayed(0, 1500);
         }
     };
 
@@ -264,6 +311,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         mTvHttp.setText(netError.errMsg + " 耗时:" + netError.usedTime + "ms");
                     }
                 });
+                break;
+            case R.id.btn_anim:
+                if (mWaterWaveView.isRunning()) {
+                    mBtnAnim.setText("开始动画");
+                    mWaterWaveView.stop();
+                } else {
+                    mBtnAnim.setText("关闭动画");
+                    mWaterWaveView.startWave();
+                }
                 break;
         }
     }
