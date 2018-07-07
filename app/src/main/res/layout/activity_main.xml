@@ -168,12 +168,12 @@
         </RelativeLayout>
     </ScrollView>
 
-    <com.axingxing.demohttp.AWebView
+    <cn.berfy.sdk.demohttp.AWebView
         android:id="@+id/webView1"
         android:layout_width="match_parent"
         android:layout_height="50dp" />
 
-    <com.axingxing.demohttp.AWebView
+    <cn.berfy.sdk.demohttp.AWebView
         android:id="@+id/webView2"
         android:layout_width="match_parent"
         android:layout_height="50dp" />
