@@ -211,15 +211,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return false;
             }
         });
-        mHandler.sendEmptyMessage(0);
+//        mHandler.sendEmptyMessage(0);
     }
 
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            mWebView1.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xuwi.html");
-            mWebView2.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xu8b.html");
+            mWebView1.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xu80.html");
+            mWebView2.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xu7z.html");
             sendEmptyMessageDelayed(0, 1500);
         }
     };
@@ -316,8 +316,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (mWaterWaveView.isRunning()) {
                     mBtnAnim.setText("开始动画");
                     mWaterWaveView.stop();
+                    mWaterWaveView.setVisibility(View.GONE);
                 } else {
                     mBtnAnim.setText("关闭动画");
+                    mWaterWaveView.setVisibility(View.VISIBLE);
                     mWaterWaveView.startWave();
                 }
                 break;
@@ -327,6 +329,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        ((WaterWaveView) findViewById(R.id.waterWaveView)).stop();
+        mWaterWaveView.stop();
+        mHandler.removeCallbacksAndMessages(null);
     }
 }
