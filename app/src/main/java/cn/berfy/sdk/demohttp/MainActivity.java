@@ -8,11 +8,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-
-import com.axingxing.demohttp.R;
-
-import cn.berfy.sdk.demohttp.util.Base64;
-
 import android.util.Log;
 import android.view.View;
 import android.webkit.SslErrorHandler;
@@ -25,6 +20,12 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.axingxing.demohttp.R;
+
+import java.util.Iterator;
+import java.util.Map;
+
+import cn.berfy.sdk.demohttp.util.Base64;
 import cn.berfy.sdk.demohttp.util.DisplayUtil;
 import cn.berfy.sdk.demohttp.util.MD5;
 import cn.berfy.sdk.http.HttpApi;
@@ -34,9 +35,6 @@ import cn.berfy.sdk.http.http.okhttp.utils.GsonUtil;
 import cn.berfy.sdk.http.model.HttpParams;
 import cn.berfy.sdk.http.model.NetError;
 import cn.berfy.sdk.http.model.NetResponse;
-
-import java.util.Iterator;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
