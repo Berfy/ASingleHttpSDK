@@ -218,8 +218,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            mWebView1.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xu80.html");
-            mWebView2.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xu7z.html");
+            mWebView1.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xxvg.html");
+            mWebView2.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xu69.html");
             sendEmptyMessageDelayed(0, 1500);
         }
     };
