@@ -149,6 +149,22 @@
                             android:hint="POST请求"
                             android:textSize="10sp" />
 
+                        <Button
+                            android:id="@+id/btn_http_rxjava_get"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:hint="GET请求（Rxjava）"
+                            android:textSize="10sp" />
+
+                        <Button
+                            android:id="@+id/btn_http_rxjava_post"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:hint="POST请求（Rxjava）"
+                            android:textSize="10sp" />
+
                         <TextView
                             android:id="@+id/tv_response"
                             android:layout_width="wrap_content"

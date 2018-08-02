@@ -6,13 +6,14 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion rootProject.ext.config['compileSdkVersion']
+    buildToolsVersion rootProject.ext.config['buildToolsVersion']
     defaultConfig {
-        applicationId "cn.berfy.sdk.httpsdk"
-        minSdkVersion 19
-        targetSdkVersion 27
-        versionCode 1
-        versionName "1.0"
+        applicationId rootProject.ext.config['applicationId']
+        minSdkVersion rootProject.ext.config.minSdkVersion
+        targetSdkVersion rootProject.ext.config.targetSdkVersion
+        versionCode rootProject.ext.config.versionCode
+        versionName rootProject.ext.config['versionName']
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -66,5 +67,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation 'io.reactivex:rxandroid:1.2.0'
     implementation project(':http')
+    implementation project(':mvpbase')
 }

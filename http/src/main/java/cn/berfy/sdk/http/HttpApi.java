@@ -193,7 +193,13 @@ public class HttpApi {
             }
             return;
         }
-        if (!TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
+        //host有/
+        boolean isHasHostIndex = false;
+        if (host.substring(host.length() - 1, host.length()).equals("/")) {
+            isHasHostIndex = true;
+        }
+        //去除多余/
+        if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
             url = url.substring(1, url.length());
         }
         if (null == httpParams) {
@@ -291,7 +297,12 @@ public class HttpApi {
             }
             return;
         }
-        if (!TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
+        //host有/
+        boolean isHasHostIndex = false;
+        if (host.substring(host.length() - 1, host.length()).equals("/")) {
+            isHasHostIndex = true;
+        }
+        if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
             url = url.substring(1, url.length());
         }
         if (null == httpParams) {
@@ -365,7 +376,12 @@ public class HttpApi {
                 callback.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, 0, "没有host");
             return;
         }
-        if (!TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
+        //host有/
+        boolean isHasHostIndex = false;
+        if (host.substring(host.length() - 1, host.length()).equals("/")) {
+            isHasHostIndex = true;
+        }
+        if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
             url = url.substring(1, url.length());
         }
         if (null == httpParams) {
@@ -436,6 +452,14 @@ public class HttpApi {
             }
             return;
         }
+        //host有/
+        boolean isHasHostIndex = false;
+        if (host.substring(host.length() - 1, host.length()).equals("/")) {
+            isHasHostIndex = true;
+        }
+        if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
+            url = url.substring(1, url.length());
+        }
         final String finalUrl = host + url;
         SuperOkHttpCallBack<String> superOkHttpCallBack = new SuperOkHttpCallBack<String>(callback);
         RequestCall requestCall = OkHttpUtils.postFile()
@@ -451,7 +475,7 @@ public class HttpApi {
 
             @Override
             public void onError(Call call, Exception e, int id) {
-                doError(call, url, e, superOkHttpCallBack);
+                doError(call, finalUrl, e, superOkHttpCallBack);
             }
 
             @Override

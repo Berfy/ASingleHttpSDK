@@ -1,12 +1,15 @@
 package cn.berfy.sdk.http.http.okhttp;
 
 import cn.berfy.sdk.http.callback.Callback;
+import cn.berfy.sdk.http.config.Constant;
 import cn.berfy.sdk.http.http.okhttp.builder.GetBuilder;
 import cn.berfy.sdk.http.http.okhttp.builder.HeadBuilder;
 import cn.berfy.sdk.http.http.okhttp.builder.OtherRequestBuilder;
 import cn.berfy.sdk.http.http.okhttp.builder.PostFileBuilder;
 import cn.berfy.sdk.http.http.okhttp.builder.PostFormBuilder;
 import cn.berfy.sdk.http.http.okhttp.builder.PostStringBuilder;
+import cn.berfy.sdk.http.http.okhttp.https.HttpsUtils;
+import cn.berfy.sdk.http.http.okhttp.log.LoggerInterceptor;
 import cn.berfy.sdk.http.http.okhttp.request.RequestCall;
 import cn.berfy.sdk.http.http.okhttp.utils.Platform;
 
@@ -50,6 +53,14 @@ public class OkHttpUtils {
             }
         }
         return mInstance;
+    }
+
+    public OkHttpClient createNewHttpClient() {
+        OkHttpClient.Builder builder1 = new OkHttpClient.Builder();
+        HttpsUtils.SSLParams sslParams1 = HttpsUtils.getSslSocketFactory(null, null, null);
+        builder1.addInterceptor(new LoggerInterceptor(Constant.HTTPTAG, true));
+        builder1.sslSocketFactory(sslParams1.sSLSocketFactory, sslParams1.trustManager);
+        return builder1.build();
     }
 
     public static OkHttpUtils getInstance() {

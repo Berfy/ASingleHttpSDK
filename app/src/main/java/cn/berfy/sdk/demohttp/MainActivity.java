@@ -1,5 +1,8 @@
 package cn.berfy.sdk.demohttp;
 
+import android.Manifest;
+import android.arch.lifecycle.Observer;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
@@ -19,10 +22,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.axingxing.demohttp.R;
+import com.hjq.permissions.OnPermission;
+import com.hjq.permissions.XXPermissions;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import cn.berfy.sdk.demohttp.util.Base64;
@@ -35,9 +42,15 @@ import cn.berfy.sdk.http.http.okhttp.utils.GsonUtil;
 import cn.berfy.sdk.http.model.HttpParams;
 import cn.berfy.sdk.http.model.NetError;
 import cn.berfy.sdk.http.model.NetResponse;
+import cn.berfy.sdk.http.rxjava.service.RetrofitHelper;
+import cn.berfy.sdk.http.rxjava.service.entity.Book;
+import cn.berfy.sdk.mvpbase.util.ToastUtil;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private Context mContext;
     private AWebView mWebView1;
     private AWebView mWebView2;
     private EditText mEditMd5;
@@ -51,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView mTvMd5;
     private Button mBtnHttpGET;
     private Button mBtnHttpPOST;
+    private Button mBtnHttpRxjavaGET;
+    private Button mBtnHttpRxjavaPOST;
     private TextView mTvHttp;
 
     //加载so库
@@ -62,6 +77,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mContext = this;
+        ToastUtil.init(getApplicationContext());
         HttpApi.init(getApplicationContext());
         RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) ((WaterWaveView) findViewById(R.id.waterWaveView)).getLayoutParams();
         layoutParams.width = RelativeLayout.LayoutParams.MATCH_PARENT;
@@ -81,6 +98,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mTvHttp = findViewById(R.id.tv_response);
         mBtnHttpGET = findViewById(R.id.btn_http_get);
         mBtnHttpPOST = findViewById(R.id.btn_http_post);
+        mBtnHttpRxjavaGET = findViewById(R.id.btn_http_rxjava_get);
+        mBtnHttpRxjavaPOST = findViewById(R.id.btn_http_rxjava_post);
         mBtnAnim = findViewById(R.id.btn_anim);
         mBtnAnim.setOnClickListener(this);
         mBtnMd5.setOnClickListener(this);
@@ -90,6 +109,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtnMd5Base64Java.setOnClickListener(this);
         mBtnHttpGET.setOnClickListener(this);
         mBtnHttpPOST.setOnClickListener(this);
+        mBtnHttpRxjavaGET.setOnClickListener(this);
+        mBtnHttpRxjavaPOST.setOnClickListener(this);
         findViewById(R.id.btn_3des).setOnClickListener(this);
         HttpApi.init(getApplicationContext());
         HttpApi.getInstances()
@@ -210,6 +231,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 //        mHandler.sendEmptyMessage(0);
+        XXPermissions.with(this)
+                .permission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .request(new OnPermission() {
+                    @Override
+                    public void hasPermission(List<String> granted, boolean isAll) {
+                        if (isAll) {
+
+                        }
+                    }
+
+                    @Override
+                    public void noPermission(List<String> denied, boolean quick) {
+
+                    }
+                });
     }
 
     private Handler mHandler = new Handler() {
@@ -321,6 +357,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mWaterWaveView.startWave();
                 }
                 break;
+            case R.id.btn_http_rxjava_get:
+                RetrofitHelper.getInstance(getApplicationContext()).getServer().getSearchBooks("1", "", 0, 10)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new rx.Observer<Book>() {
+                            @Override
+                            public void onCompleted() {
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                e.printStackTrace();
+                                ToastUtil.getInstances().showShort(e.getMessage());
+                            }
+
+                            @Override
+                            public void onNext(Book book) {
+                                if (null != book) {
+                                    ToastUtil.getInstances().showShort("获取成功" + GsonUtil.getInstance().toJson(book));
+                                } else {
+                                    ToastUtil.getInstances().showShort("获取成功book=null");
+                                }
+                            }
+                        });
+                break;
+            case R.id.btn_http_rxjava_post:
+                RetrofitHelper.getInstance(getApplicationContext()).getServer().getSearchBooksPost("1")
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new rx.Observer<Book>() {
+                            @Override
+                            public void onCompleted() {
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                e.printStackTrace();
+                                ToastUtil.getInstances().showShort(e.getMessage());
+                            }
+
+                            @Override
+                            public void onNext(Book book) {
+                                if (null != book) {
+                                    ToastUtil.getInstances().showShort("获取成功" + GsonUtil.getInstance().toJson(book));
+                                } else {
+                                    ToastUtil.getInstances().showShort("获取成功book=null");
+                                }
+                            }
+                        });                break;
         }
     }
 
