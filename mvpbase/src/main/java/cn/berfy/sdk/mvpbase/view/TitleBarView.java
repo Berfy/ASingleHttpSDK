@@ -95,27 +95,6 @@ public class TitleBarView extends LinearLayout {
             ((Activity) mContext).finish();
         });
         showStatusBarMargin(true);
-        showMainTheme();
-    }
-
-    //主页面标题栏
-    public void showMainTheme() {
-        mStatusMarginBar.setBgColor(R.color.color_titlebar_light_theme);
-        mIvBack.setImageResource(R.mipmap.ic_arrow_white);
-        mRlBg.setBackgroundColor(getResources().getColor(R.color.color_titlebar_light_theme));
-        setTitleColor(getResources().getColor(R.color.color_titlebar_light_title));
-        mTvLeft.setTextColor(getResources().getColor(R.color.color_titlebar_light_small_title));
-        mTvRight.setTextColor(getResources().getColor(R.color.color_titlebar_light_small_title));
-    }
-
-    //次页面标题栏
-    public void showNormalTheme() {
-        mStatusMarginBar.setBgColor(R.color.color_titlebar_normal_theme);
-        mIvBack.setImageResource(R.mipmap.ic_arrow_normal);
-        mRlBg.setBackgroundColor(getResources().getColor(R.color.color_titlebar_normal_theme));
-        setTitleColor(getResources().getColor(R.color.color_titlebar_normal_title));
-        mTvLeft.setTextColor(getResources().getColor(R.color.color_titlebar_normal_small_title));
-        mTvRight.setTextColor(getResources().getColor(R.color.color_titlebar_normal_small_title));
     }
 
     public void showStatusBarMargin(boolean isShow) {

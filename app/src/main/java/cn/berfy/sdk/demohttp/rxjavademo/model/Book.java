@@ -1,4 +1,4 @@
-package cn.berfy.sdk.http.rxjava.service.entity;
+package cn.berfy.sdk.demohttp.rxjavademo.model;
 
 import java.util.List;
 

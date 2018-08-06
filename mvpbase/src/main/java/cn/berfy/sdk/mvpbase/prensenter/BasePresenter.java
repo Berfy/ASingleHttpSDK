@@ -12,7 +12,7 @@ public abstract class BasePresenter<T> {
         mView = view;
     }
 
-    protected T getView(){
+    protected T getView() {
         return mView;
     }
 

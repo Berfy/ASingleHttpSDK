@@ -44,7 +44,7 @@ public class StatusMarginBar extends LinearLayout {
                     LogF.d(TAG, "状态栏主题 高亮 " + CommonUtil.getColor(mContext, color));
                 } else {
                     //                    setBgColor(R.color.color_titlebar_normal_theme);
-                    color = R.color.color_titlebar_normal_theme;
+                    color = R.color.color_white;
                     LogF.d(TAG, "状态栏主题 正常 " + CommonUtil.getColor(mContext, color));
                 }
                 mColorBg = ta.getColor(R.styleable.titleStyle_bar_back_color, CommonUtil.getColor(mContext, color));
@@ -68,7 +68,7 @@ public class StatusMarginBar extends LinearLayout {
                     color = R.color.color_titlebar_light_theme;
                 } else {
                     //                    setBgColor(R.color.color_titlebar_normal_theme);
-                    color = R.color.color_titlebar_normal_theme;
+                    color = R.color.color_white;
                 }
                 mColorBg = ta.getColor(R.styleable.titleStyle_bar_back_color, CommonUtil.getColor(mContext, color));
 //                init();
@@ -77,7 +77,7 @@ public class StatusMarginBar extends LinearLayout {
     }
 
     private void initView() {
-        mColorBg = CommonUtil.getColor(mContext, R.color.color_titlebar_normal_theme);
+        mColorBg = CommonUtil.getColor(mContext, R.color.color_white);
     }
 
     public StatusMarginBar showStatusMarginBar(boolean isEnable) {

@@ -89,7 +89,9 @@
 #主
 -keep class cn.berfy.sdk.http.model.**{*;}
 -keep class cn.berfy.sdk.http.HttpApi{*;}
+-keep class cn.berfy.sdk.http.demo.**{*;}
 -keep class cn.berfy.sdk.http.callback.**{*;}
+-keep class java.util.**{*;}
 # OkHttp3
 -dontwarn okhttp3.logging.**
 -keep class okhttp3.internal.**{*;}

@@ -24,7 +24,6 @@
     <color name="color_titlebar_light_theme">#f1b24a</color>
     <color name="color_titlebar_light_title">#ffffff</color>
     <color name="color_titlebar_light_small_title">#ffffff</color>
-    <color name="color_titlebar_normal_theme">#f8f8f8</color>
     <color name="color_titlebar_normal_title">#333333</color>
     <color name="color_titlebar_normal_small_title">#777777</color>
     <color name="color_bar_black_translate">#30181927</color>

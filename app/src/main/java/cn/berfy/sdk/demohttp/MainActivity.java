@@ -1,7 +1,6 @@
 package cn.berfy.sdk.demohttp;
 
 import android.Manifest;
-import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
@@ -10,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.webkit.SslErrorHandler;
@@ -22,16 +20,21 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.axingxing.demohttp.R;
 import com.hjq.permissions.OnPermission;
 import com.hjq.permissions.XXPermissions;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import cn.berfy.sdk.demohttp.model.Data;
+import cn.berfy.sdk.demohttp.rxjavademo.DemoHttpApi;
+import cn.berfy.sdk.demohttp.rxjavademo.model.Book;
+import cn.berfy.sdk.demohttp.rxjavademo.presenter.DemoHttpPresenter;
+import cn.berfy.sdk.demohttp.rxjavademo.view.IDemoHttpView;
 import cn.berfy.sdk.demohttp.util.Base64;
 import cn.berfy.sdk.demohttp.util.DisplayUtil;
 import cn.berfy.sdk.demohttp.util.MD5;
@@ -42,15 +45,19 @@ import cn.berfy.sdk.http.http.okhttp.utils.GsonUtil;
 import cn.berfy.sdk.http.model.HttpParams;
 import cn.berfy.sdk.http.model.NetError;
 import cn.berfy.sdk.http.model.NetResponse;
-import cn.berfy.sdk.http.rxjava.service.RetrofitHelper;
-import cn.berfy.sdk.http.rxjava.service.entity.Book;
+import cn.berfy.sdk.mvpbase.base.CommonActivity;
 import cn.berfy.sdk.mvpbase.util.ToastUtil;
+import rx.Observable;
+import rx.Scheduler;
+import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.functions.Func0;
+import rx.observers.Subscribers;
 import rx.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends CommonActivity<IDemoHttpView, DemoHttpPresenter> implements View.OnClickListener, IDemoHttpView {
 
-    private Context mContext;
     private AWebView mWebView1;
     private AWebView mWebView2;
     private EditText mEditMd5;
@@ -74,10 +81,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        mContext = this;
+    public int getContentViewId() {
+        return R.layout.activity_main;
+    }
+
+    @Override
+    public void initData(@Nullable Bundle savedInstanceState) {
+
+    }
+
+    @Override
+    public void initView() {
+        showTitleBar();
+        getTitleBar().setLeftIcon(false);
+        getTitleBar().setTitle(R.string.app_name);
         ToastUtil.init(getApplicationContext());
         HttpApi.init(getApplicationContext());
         RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) ((WaterWaveView) findViewById(R.id.waterWaveView)).getLayoutParams();
@@ -114,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_3des).setOnClickListener(this);
         HttpApi.init(getApplicationContext());
         HttpApi.getInstances()
-                .setHost("http://www.baidu.com/")
+                .setHost("http://223.203.221.49:18610/")
                 .setStatusListener(new OnStatusListener() {
                     @Override
                     public void statusCodeError(int i, long usedTime) {
@@ -126,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public HttpParams addParams(HttpParams rawParams) {
                         Log.d(HttpApi.getInstances().getLogTAG(), "测试  请求参数  " + GsonUtil.getInstance().toJson(rawParams.getParams()));
                         Log.d(HttpApi.getInstances().getLogTAG(), "测试  请求Headers  " + GsonUtil.getInstance().toJson(rawParams.getHeaders()));
-                        rawParams.putParam("ts", System.currentTimeMillis() + "");
+                        rawParams.putParam("sign_ts", System.currentTimeMillis() + "");
                         Iterator<Map.Entry<String, Object>> headers = rawParams.getParams().entrySet().iterator();
                         StringBuffer sb = new StringBuffer();
                         while (headers.hasNext()) {
@@ -135,8 +152,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
 
                         HttpParams httpParams1 = new HttpParams();
-                        httpParams1.putParam("ts", rawParams.getParams().get("ts"));
-                        httpParams1.putHeader("sign", HttpApi.getInstances().encodeMD5(false, HttpApi.getInstances().encode3Des(sb.toString())));
+                        httpParams1.putParam("sign_ts", rawParams.getParams().get("ts"));
+                        httpParams1.putHeader("sign", HttpApi.getInstances().encodeMD5(false, sb.toString()));
                         return null;
                     }
 
@@ -230,7 +247,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return false;
             }
         });
-//        mHandler.sendEmptyMessage(0);
         XXPermissions.with(this)
                 .permission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .request(new OnPermission() {
@@ -246,6 +262,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     }
                 });
+        mHandler.sendEmptyMessage(0);
+    }
+
+    @Override
+    public DemoHttpPresenter initPresenter() {
+        return new DemoHttpPresenter();
+    }
+
+    @Override
+    public void hiddenLoadingView(@org.jetbrains.annotations.Nullable String msg) {
+
+    }
+
+    @Override
+    public void showLoadingView(@org.jetbrains.annotations.Nullable String msg) {
+
     }
 
     private Handler mHandler = new Handler() {
@@ -253,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             mWebView1.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xxvg.html");
-            mWebView2.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xu69.html");
+            mWebView2.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xuw4.html");
             sendEmptyMessageDelayed(0, 1500);
         }
     };
@@ -358,54 +390,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.btn_http_rxjava_get:
-                RetrofitHelper.getInstance(getApplicationContext()).getServer().getSearchBooks("1", "", 0, 10)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new rx.Observer<Book>() {
-                            @Override
-                            public void onCompleted() {
-                            }
+                getPresenter().checkUpdate("1.4.6", new rx.Observer<Data>() {
+                    @Override
+                    public void onCompleted() {
+                    }
 
-                            @Override
-                            public void onError(Throwable e) {
-                                e.printStackTrace();
-                                ToastUtil.getInstances().showShort(e.getMessage());
-                            }
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                        ToastUtil.getInstances().showShort(e.getMessage());
+                    }
 
-                            @Override
-                            public void onNext(Book book) {
-                                if (null != book) {
-                                    ToastUtil.getInstances().showShort("获取成功" + GsonUtil.getInstance().toJson(book));
-                                } else {
-                                    ToastUtil.getInstances().showShort("获取成功book=null");
-                                }
-                            }
-                        });
+                    @Override
+                    public void onNext(Data book) {
+                        if (null != book) {
+                            ToastUtil.getInstances().showShort("获取成功" + GsonUtil.getInstance().toJson(book));
+                        } else {
+                            ToastUtil.getInstances().showShort("获取成功book=null");
+                        }
+                    }
+                });
                 break;
             case R.id.btn_http_rxjava_post:
-                RetrofitHelper.getInstance(getApplicationContext()).getServer().getSearchBooksPost("1")
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new rx.Observer<Book>() {
-                            @Override
-                            public void onCompleted() {
-                            }
+                getPresenter().getSearchBooks("1", "", 1, 10, new rx.Observer<Book>() {
+                    @Override
+                    public void onCompleted() {
+                    }
 
-                            @Override
-                            public void onError(Throwable e) {
-                                e.printStackTrace();
-                                ToastUtil.getInstances().showShort(e.getMessage());
-                            }
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                        ToastUtil.getInstances().showShort(e.getMessage());
+                    }
 
-                            @Override
-                            public void onNext(Book book) {
-                                if (null != book) {
-                                    ToastUtil.getInstances().showShort("获取成功" + GsonUtil.getInstance().toJson(book));
-                                } else {
-                                    ToastUtil.getInstances().showShort("获取成功book=null");
-                                }
-                            }
-                        });                break;
+                    @Override
+                    public void onNext(Book book) {
+                        if (null != book) {
+                            ToastUtil.getInstances().showShort("获取成功" + GsonUtil.getInstance().toJson(book));
+                        } else {
+                            ToastUtil.getInstances().showShort("获取成功book=null");
+                        }
+                    }
+                });
+                break;
         }
     }
 

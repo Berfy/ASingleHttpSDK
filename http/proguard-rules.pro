@@ -90,10 +90,10 @@ public *;
 }
 #----------------------------------------------------------------------------
 #主
--keep class com.axingxing.http.model.**{*;}
--keep class com.axingxing.http.HttpApi{*;}
--keep class com.axingxing.http.demo.**{*;}
--keep class com.axingxing.http.callback.**{*;}
+-keep class cn.berfy.sdk.http.model.**{*;}
+-keep class cn.berfy.sdk.http.HttpApi{*;}
+-keep class cn.berfy.sdk.http.demo.**{*;}
+-keep class cn.berfy.sdk.http.callback.**{*;}
 -keep class java.util.**{*;}
 
 

@@ -47,6 +47,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class HttpApi {
 
@@ -58,6 +61,7 @@ public class HttpApi {
     private long mReadTimeout = 20;
     private long mWriteTimeout = 60;
     private HttpParams mHeaders;
+    private Retrofit mRetrofit = null;
 
     public static HttpApi init(Context context) {
         if (null == mHttpApi) {
@@ -160,6 +164,13 @@ public class HttpApi {
         OkHttpClient okHttpClient = builder.build();
         OkHttpUtils.initClient(okHttpClient);
 //        Glide.get(context).register(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(getHttpClient()));
+
+        mRetrofit = new Retrofit.Builder()
+                .baseUrl(mBaseUrl)
+                .client(OkHttpUtils.getInstance().getOkHttpClient())
+                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .build();
     }
 
     public OkHttpClient getHttpClient() {
@@ -168,6 +179,10 @@ public class HttpApi {
         builder1.addInterceptor(new LoggerInterceptor(Constant.HTTPTAG, true));
         builder1.sslSocketFactory(sslParams1.sSLSocketFactory, sslParams1.trustManager);
         return builder1.build();
+    }
+
+    public <T> T getServer(final Class<T> service) {
+        return mRetrofit.create(service);
     }
 
     public void get(String url, HttpParams httpParams, HttpCallBack callback) {

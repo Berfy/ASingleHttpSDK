@@ -93,7 +93,7 @@ public abstract class CommonActivity<V extends IBaseView, T extends BasePresente
 
     private void setBaseContentView() {
         setStatusTransparent();
-        darkStatusBar(false);
+        darkStatusBar(true);
         setContentView(R.layout.base_activity);
         mLayoutBase = findViewById(R.id.layout_base);
         mStatusMarginBar = findViewById(R.id.common_statusBar);
