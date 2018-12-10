@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 
+import cn.berfy.sdk.mvpbase.util.HexDump;
+
 public class MD5 {
 
     public static String getStringMD5(String value) {
