@@ -98,7 +98,7 @@ class WaterWaveView : View {
                         mAngle2 = 0f
                     }
                     try {
-                        if (mWidth > 0 && mHeight > 0) {
+                        if (mWidth > 0 && mHeight > 0 && mWaters.size > 0) {
                             for (i in 0 until mWaters.size / 3) {
                                 val water = mWaters[i]
                                 val trueHeight = mHeight * (1 - mLevel)
@@ -153,7 +153,7 @@ class WaterWaveView : View {
                 // TODO Auto-generated method stub
                 while (isRunning) {
                     try {
-                        if (mWidth > 0 && mHeight > 0) {
+                        if (mWidth > 0 && mHeight > 0 && mWaters.size > 0) {
                             for (i in mWaters.size / 3 until mWaters.size / 3 * 2) {
                                 val water = mWaters[i]
                                 val trueHeight = mHeight * (1 - mLevel)
@@ -208,7 +208,7 @@ class WaterWaveView : View {
                 // TODO Auto-generated method stub
                 while (isRunning) {
                     try {
-                        if (mWidth > 0 && mHeight > 0) {
+                        if (mWidth > 0 && mHeight > 0 && mWaters.size > 0) {
                             for (i in mWaters.size / 3 * 2 until mWaters.size) {
                                 val water = mWaters[i]
                                 val trueHeight = mHeight * (1 - mLevel)
