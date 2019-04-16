@@ -14,7 +14,6 @@ public class NetResponse<T> {
 //    public NetMessage netMessage;
     public T data;
     public int statusCode;
-    public long usedTime;//ms
 
 //    public boolean isOk() {
 //        if (null != netMessage && netMessage.code == 1) {

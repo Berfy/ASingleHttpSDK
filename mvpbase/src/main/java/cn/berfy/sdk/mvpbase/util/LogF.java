@@ -293,4 +293,8 @@ public class LogF {
         }
     }
 
+    public static void printStackTrace(Throwable t) {
+        if (isDebug() && t != null) t.printStackTrace();
+    }
+
 }

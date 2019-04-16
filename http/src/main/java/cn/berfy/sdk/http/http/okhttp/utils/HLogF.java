@@ -23,11 +23,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 
-public class LogF {
+public class HLogF {
 
     private static boolean DEBUG = true;
 
-    private static final String TAG = "LogF";
+    private static final String TAG = "HLogF";
     private static final String LEVEL_V = "V";
     private static final String LEVEL_I = "I";
     private static final String LEVEL_D = "D";
@@ -39,7 +39,7 @@ public class LogF {
 //        if (r instanceof FutureTask<?>) {
 //            ((FutureTask<?>) r).cancel(true);
 //        }
-//        if (LogF.DEBUG) {
+//        if (HLogF.DEBUG) {
 //            Log.d(TAG, "mExecutor.rejectedExecution.r = " + r); // 注意，使用Log，别用LogF，否则会死循环
 //        }
 //    });
@@ -291,6 +291,10 @@ public class LogF {
                 }
                 break;
         }
+    }
+
+    public static void printStackTrace(Throwable t) {
+        if (isDebug() && t != null) t.printStackTrace();
     }
 
 }

@@ -37,8 +37,8 @@ public class UserAgentInterceptor implements Interceptor {
 //                .addHeader("Longitude", Gloabal.longitude)
 //                .addHeader("ServerStatus", "test")//TODO 正式发版注释掉该行
                 .build();
-//        LogF.d(TAG, requestWithUserAgent.headers().toString());
-//        LogF.d(TAG, new Gson().toJson(requestWithUserAgent.url()) + "   header= " + new Gson().toJson(requestWithUserAgent.headers()));
+//        HLogF.d(TAG, requestWithUserAgent.headers().toString());
+//        HLogF.d(TAG, new Gson().toJson(requestWithUserAgent.url()) + "   header= " + new Gson().toJson(requestWithUserAgent.headers()));
         return chain.proceed(requestWithUserAgent);
     }
 
@@ -65,7 +65,7 @@ public class UserAgentInterceptor implements Interceptor {
 //                la = "ja-CN";
 //                break;
 //        }
-//        LogF.d(TAG, "lan==>" + la);
+//        HLogF.d(TAG, "lan==>" + la);
 //
 //        return la;
 //    }

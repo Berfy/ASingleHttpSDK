@@ -10,7 +10,7 @@ import cn.berfy.sdk.http.model.HttpParams;
 
 public interface OnStatusListener {
 
-    void statusCodeError(int code, long usedTime);//针对非200-300的状态处理
+    void statusCodeError(int code, String errMsg);//针对非200-300的状态处理
 
     void receiveSetCookie(String cookie);
 

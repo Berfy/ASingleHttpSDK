@@ -52,7 +52,7 @@ public class AddCookiesInterceptor implements Interceptor {
 //        Observable.just(str)
 //                .subscribe(cookie -> {
 //                    builder.addHeader(Constant.COOKIE, cookie);
-//                    LogF.d(Constant.HTTPTAG, "从SharedPreference中获取的Cookie---" + cookie);
+//                    HLogF.d(Constant.HTTPTAG, "从SharedPreference中获取的Cookie---" + cookie);
 //                });
 
         return chain.proceed(builder.build());

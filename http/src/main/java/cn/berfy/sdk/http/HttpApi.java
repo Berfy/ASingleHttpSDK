@@ -3,9 +3,14 @@ package cn.berfy.sdk.http;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
-import android.webkit.WebView;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import cn.berfy.sdk.http.callback.Callback;
 import cn.berfy.sdk.http.callback.DownloadFileCallBack;
 import cn.berfy.sdk.http.callback.HttpCallBack;
 import cn.berfy.sdk.http.callback.OnStatusListener;
@@ -16,36 +21,25 @@ import cn.berfy.sdk.http.http.interceptor.AddCookiesInterceptor;
 import cn.berfy.sdk.http.http.interceptor.Md5SignInterceptor;
 import cn.berfy.sdk.http.http.interceptor.ReceivedCookiesInterceptor;
 import cn.berfy.sdk.http.http.interceptor.UserAgentInterceptor;
+import cn.berfy.sdk.http.http.okgo.OkGo;
+import cn.berfy.sdk.http.http.okgo.cache.CacheEntity;
+import cn.berfy.sdk.http.http.okgo.cache.CacheMode;
+import cn.berfy.sdk.http.http.okgo.callback.StringCallback;
+import cn.berfy.sdk.http.http.okgo.model.HttpHeaders;
+import cn.berfy.sdk.http.http.okgo.request.GetRequest;
+import cn.berfy.sdk.http.http.okgo.request.PostRequest;
 import cn.berfy.sdk.http.http.okhttp.OkHttpUtils;
-import cn.berfy.sdk.http.http.okhttp.builder.GetBuilder;
 import cn.berfy.sdk.http.http.okhttp.https.HttpsUtils;
 import cn.berfy.sdk.http.http.okhttp.log.LoggerInterceptor;
-import cn.berfy.sdk.http.http.okhttp.request.RequestCall;
 import cn.berfy.sdk.http.http.okhttp.utils.FileUtils;
 import cn.berfy.sdk.http.http.okhttp.utils.GsonUtil;
+import cn.berfy.sdk.http.http.okhttp.utils.HLogF;
 import cn.berfy.sdk.http.http.okhttp.utils.Hmac;
-import cn.berfy.sdk.http.http.okhttp.utils.LogF;
 import cn.berfy.sdk.http.http.okhttp.utils.NetworkUtil;
 import cn.berfy.sdk.http.model.HttpParams;
-import cn.berfy.sdk.http.model.NetError;
-import cn.berfy.sdk.http.util.Des;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import okhttp3.Call;
-import okhttp3.FormBody;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
@@ -57,9 +51,9 @@ public class HttpApi {
     public static HttpApi mHttpApi;
     private OnStatusListener mOnStatusListener;
     private String mBaseUrl = "";
-    private long mConnectTimeout = 20;
-    private long mReadTimeout = 20;
-    private long mWriteTimeout = 60;
+    private long mConnectTimeoutSecond = 20;
+    private long mReadTimeoutSecond = 20;
+    private long mWriteTimeoutSecond = 60;
     private HttpParams mHeaders;
     private Retrofit mRetrofit = null;
 
@@ -83,34 +77,42 @@ public class HttpApi {
 
     private HttpApi(Context context) {
         mContext = context;
-        LogF.d(Constant.HTTPTAG, "接口服务初始化...");
+        HLogF.d(Constant.HTTPTAG, "接口服务初始化...");
+    }
+
+    public Context getContext() {
+        return mContext;
     }
 
     public HttpApi setHost(String baseUrl) {
-        LogF.d(Constant.HTTPTAG, "新的主机名" + baseUrl);
+        HLogF.d(Constant.HTTPTAG, "新的主机名" + baseUrl);
         mBaseUrl = baseUrl;
         return mHttpApi;
     }
 
-    public HttpApi setTimeOut(long connectTimeout, long readTimeout, long writeTimeout) {
-        mConnectTimeout = connectTimeout;
-        mReadTimeout = readTimeout;
-        mWriteTimeout = writeTimeout;
+    public String getHost() {
+        return mBaseUrl;
+    }
+
+    public HttpApi setTimeOut(long connectTimeoutSecond, long readTimeoutSecond, long writeTimeoutSecond) {
+        mConnectTimeoutSecond = connectTimeoutSecond;
+        mReadTimeoutSecond = readTimeoutSecond;
+        mWriteTimeoutSecond = writeTimeoutSecond;
         return mHttpApi;
     }
 
-    public HttpApi setHeader(HttpParams headers) {
-        mHeaders = headers;
-        return mHttpApi;
-    }
+//    public HttpApi setHeader(HttpParams headers) {
+//        mHeaders = headers;
+//        return mHttpApi;
+//    }
 
     public HttpApi setCacheDir(String dir) {
-        LogF.d(Constant.HTTPTAG, "缓存目录" + dir);
+        HLogF.d(Constant.HTTPTAG, "缓存目录" + dir);
         Constant.setCacheDir(dir);
         return mHttpApi;
     }
 
-    public HttpApi setStatusListener(OnStatusListener onStatusListener) {
+    public HttpApi setOnStatusListener(OnStatusListener onStatusListener) {
         mOnStatusListener = onStatusListener;
         return mHttpApi;
     }
@@ -129,38 +131,28 @@ public class HttpApi {
         return Constant.HTTPTAG;
     }
 
-    public void finish() {
-        LogF.d(Constant.HTTPTAG, "接口服务初始化完毕");
+    public void start() {
+        HLogF.d(Constant.HTTPTAG, "接口服务初始化完毕");
         if (TextUtils.isEmpty(mBaseUrl)) {
-            LogF.d(Constant.HTTPTAG, "没有设置主机名");
+            HLogF.d(Constant.HTTPTAG, "没有设置主机名");
             return;
         }
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
+
         //设置拦截器，以用于自定义Cookies的设置
         builder.addInterceptor(new AddCookiesInterceptor(mContext, mOnStatusListener));
         builder.addInterceptor(new ReceivedCookiesInterceptor(mContext, Constant.HTTPTAG, mOnStatusListener));
         builder.addInterceptor(new Md5SignInterceptor(Constant.HTTPTAG, mOnStatusListener));//接口签名
         builder.addInterceptor(new LoggerInterceptor(Constant.HTTPTAG, true));
-//        if (Constant.DEBUG) {
-//            // https://drakeet.me/retrofit-2-0-okhttp-3-0-config
-//            HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-//                @Override
-//                public void log(String message) {
-//                    LogUtil.d("HttpLoggingInterceptor", message);
-//                }
-//            });
-//            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-//            builder.addInterceptor(loggingInterceptor);
-//        }
+
         HttpsUtils.SSLParams sslParams = HttpsUtils.getSslSocketFactory(null, null, null);
         builder.sslSocketFactory(sslParams.sSLSocketFactory, sslParams.trustManager);
         //错误重连
         builder.retryOnConnectionFailure(true);
-        builder.connectTimeout(mConnectTimeout, TimeUnit.SECONDS);
-        builder.readTimeout(mReadTimeout, TimeUnit.SECONDS);
-        builder.writeTimeout(mWriteTimeout, TimeUnit.SECONDS);
-        String userAgent = new WebView(mContext).getSettings().getUserAgentString();
-        builder.addInterceptor(new UserAgentInterceptor(mContext, getValidUA(userAgent), Constant.HTTPTAG));
+        builder.connectTimeout(mConnectTimeoutSecond, TimeUnit.SECONDS);
+        builder.readTimeout(mReadTimeoutSecond, TimeUnit.SECONDS);
+        builder.writeTimeout(mWriteTimeoutSecond, TimeUnit.SECONDS);
+        builder.addInterceptor(new UserAgentInterceptor(mContext, HttpHeaders.getUserAgent(mContext), Constant.HTTPTAG));
         OkHttpClient okHttpClient = builder.build();
         OkHttpUtils.initClient(okHttpClient);
 //        Glide.get(context).register(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(getHttpClient()));
@@ -171,6 +163,11 @@ public class HttpApi {
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .build();
+        OkGo.getInstance()
+                .init(mContext)
+                .setOkHttpClient(okHttpClient)
+                .setCacheMode(CacheMode.NO_CACHE)
+                .setCacheTime(CacheEntity.CACHE_NEVER_EXPIRE);
     }
 
     public OkHttpClient getHttpClient() {
@@ -185,50 +182,139 @@ public class HttpApi {
         return mRetrofit.create(service);
     }
 
+    public SuperRequest get(String url) {
+        return get("", url);
+    }
+
+    public SuperRequest get(String host, String url) {
+        return new SuperRequest(SuperRequest.GET, host, url);
+    }
+
+    public SuperRequest post(String url) {
+        return post("", url);
+    }
+
+    public SuperRequest post(String host, String url) {
+        return new SuperRequest(SuperRequest.POST, host, url);
+    }
+
+    public SuperRequest postJson(String url) {
+        return postJson("", url);
+    }
+
+    public SuperRequest postJson(String host, String url) {
+        return new SuperRequest(SuperRequest.POST_JSON, host, url);
+    }
+
+    public static class SuperRequest {
+
+        private String mHost;
+        private String mUrl;
+        private HttpParams mHttpParams;
+        private int mRequestType;//0 get 1 post
+        public static final int GET = 0;
+        public static final int POST = 1;
+        public static final int POST_JSON = 2;
+
+        public SuperRequest(int requestType, String url) {
+            mRequestType = requestType;
+            mUrl = url;
+        }
+
+        public SuperRequest(int requestType, String host, String url) {
+            mRequestType = requestType;
+            mHost = host;
+            mUrl = url;
+        }
+
+        public SuperRequest header(String key, String value) {
+            if (null == mHttpParams) {
+                mHttpParams = new HttpParams();
+            }
+            mHttpParams.putHeader(key, value);
+            return this;
+        }
+
+        public SuperRequest headers(HttpHeaders httpHeaders) {
+            if (null == mHttpParams) {
+                mHttpParams = new HttpParams();
+            }
+            mHttpParams.putHeaders(httpHeaders);
+            return this;
+        }
+
+        public SuperRequest param(String key, String value) {
+            if (null == mHttpParams) {
+                mHttpParams = new HttpParams();
+            }
+            mHttpParams.putParam(key, value);
+            return this;
+        }
+
+        public <T> void callBack(SuperOkHttpCallBack<T> callback) {
+            if (TextUtils.isEmpty(mHost)) {
+                mHost = HttpApi.getInstances().getHost();
+            }
+            switch (mRequestType) {
+                case GET:
+                    HttpApi.getInstances().get(mHost, mUrl, mHttpParams, callback);
+                    break;
+                case POST:
+                    HttpApi.getInstances().post(mHost, mUrl, mHttpParams, callback);
+                    break;
+                case POST_JSON:
+                    HttpApi.getInstances().postJson(mHost, mUrl, mHttpParams, callback);
+                    break;
+            }
+        }
+    }
+
     public void get(String url, HttpParams httpParams, HttpCallBack callback) {
         SuperOkHttpCallBack<String> superOkHttpCallBack = new SuperOkHttpCallBack<String>(callback);
-        get(mBaseUrl, url, httpParams, superOkHttpCallBack, false);
+        get(mBaseUrl, url, httpParams, superOkHttpCallBack);
     }
 
     public void get(String host, String url, HttpParams httpParams, HttpCallBack callback) {
         SuperOkHttpCallBack<String> superOkHttpCallBack = new SuperOkHttpCallBack<String>(callback);
-        get(host, url, httpParams, superOkHttpCallBack, false);
+        get(host, url, httpParams, superOkHttpCallBack);
     }
 
-    //（不开放）
-    private <T> void superGet(String url, HttpParams httpParams, SuperOkHttpCallBack<T> callback) {
-        get(mBaseUrl, url, httpParams, callback, true);
+    public <T> void get(String url, HttpParams httpParams, SuperOkHttpCallBack<T> callback) {
+        get(mBaseUrl, url, httpParams, callback);
     }
 
-    //get请求（不开放）
-    private <T> void get(String host, String url, HttpParams httpParams, SuperOkHttpCallBack<T> callback, boolean needGson) {
-        if (TextUtils.isEmpty(host)) {
+    public <T> void get(String host, String url, HttpParams httpParams, final SuperOkHttpCallBack<T> callback) {
+        HLogF.d(Constant.HTTPTAG, "get请求");
+        if (TextUtils.isEmpty(host) && TextUtils.isEmpty(mBaseUrl)) {
             if (null != callback) {
-                callback.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, 0, "没有host");
+                callback.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, "没有host");
             }
             return;
         }
         //host有/
         boolean isHasHostIndex = false;
-        if (host.substring(host.length() - 1, host.length()).equals("/")) {
-            isHasHostIndex = true;
-        }
+        if (!TextUtils.isEmpty(host))
+            if (host.substring(host.length() - 1, host.length()).equals("/")) {
+                isHasHostIndex = true;
+            }
         //去除多余/
-        if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
-            url = url.substring(1, url.length());
-        }
+        if (!TextUtils.isEmpty(url))
+            if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
+                url = url.substring(1, url.length());
+            }
         if (null == httpParams) {
             httpParams = new HttpParams();
         }
         final String finalUrl = host + url;
-        GetBuilder builder = OkHttpUtils.get()
-                .url(finalUrl);
+
+        GetRequest<String> getRequest = OkGo.<String>get(finalUrl)
+                .tag(this);
         //添加header
         Iterator<Map.Entry<String, Object>> headers = httpParams.getHeaders().entrySet().iterator();
         while (headers.hasNext()) {
             Map.Entry<String, Object> entry = headers.next();
             if (!TextUtils.isEmpty(entry.getKey()) && !TextUtils.isEmpty(entry.getValue().toString())) {
-                builder.addHeader(entry.getKey().trim(), entry.getValue().toString());
+                getRequest.headers(entry.getKey().trim(), entry.getValue().toString());
             }
         }
         //添加params参数
@@ -236,29 +322,22 @@ public class HttpApi {
         while (params.hasNext()) {
             Map.Entry<String, Object> entry = params.next();
             if (!TextUtils.isEmpty(entry.getKey()) && !TextUtils.isEmpty(entry.getValue().toString())) {
-                builder.addParams(entry.getKey().trim(), entry.getValue().toString());
+                getRequest.params(entry.getKey().trim(), entry.getValue().toString());
             }
         }
         if (null != callback) {
             callback.start();
         }
-        RequestCall call = builder
-                .tag(System.currentTimeMillis())
-                .build();
-        call.execute(new Callback<Response>() {
+
+        getRequest.execute(new StringCallback() {
             @Override
-            public Response parseNetworkResponse(Response response, int id) throws Exception {
-                return response;
+            public void onSuccess(cn.berfy.sdk.http.http.okgo.model.Response<String> response) {
+                checkResultNew(response, callback);
             }
 
             @Override
-            public void onError(Call call, Exception e, int id) {
-                doError(call, finalUrl, e, callback);
-            }
-
-            @Override
-            public void onResponse(Response response, int id) {
-                checkResult(response, callback, needGson);
+            public void onError(cn.berfy.sdk.http.http.okgo.model.Response<String> response) {
+                doError(finalUrl, response.getException(), callback);
             }
         });
     }
@@ -268,10 +347,10 @@ public class HttpApi {
         SuperOkHttpCallBack<String> superOkHttpCallBack = new SuperOkHttpCallBack<String>(callback);
         switch (httpParams.getContentType()) {
             case POST_TYPE_FORM:
-                post(mBaseUrl, url, httpParams, superOkHttpCallBack, false);
+                post(mBaseUrl, url, httpParams, superOkHttpCallBack);
                 break;
             case POST_TYPE_JSON:
-                postJson(mBaseUrl, url, httpParams, superOkHttpCallBack, false);
+                postJson(mBaseUrl, url, httpParams, superOkHttpCallBack);
                 break;
         }
     }
@@ -281,96 +360,85 @@ public class HttpApi {
         SuperOkHttpCallBack<String> superOkHttpCallBack = new SuperOkHttpCallBack<String>(callback);
         switch (httpParams.getContentType()) {
             case POST_TYPE_FORM:
-                post(host, url, httpParams, superOkHttpCallBack, false);
+                post(host, url, httpParams, superOkHttpCallBack);
                 break;
             case POST_TYPE_JSON:
-                postJson(host, url, httpParams, superOkHttpCallBack, false);
+                postJson(host, url, httpParams, superOkHttpCallBack);
                 break;
             default:
-                post(host, url, httpParams, superOkHttpCallBack, false);
+                post(host, url, httpParams, superOkHttpCallBack);
                 break;
         }
     }
 
-    //post请求（不开放）
-    private <T> void superPost(String url, HttpParams httpParams, SuperOkHttpCallBack<T> callback) {
+    public <T> void post(String url, HttpParams httpParams, SuperOkHttpCallBack<T> callback) {
         switch (httpParams.getContentType()) {
             case POST_TYPE_FORM:
-                post(mBaseUrl, url, httpParams, callback, true);
+                post(mBaseUrl, url, httpParams, callback);
                 break;
             case POST_TYPE_JSON:
-                postJson(mBaseUrl, url, httpParams, callback, true);
+                postJson(mBaseUrl, url, httpParams, callback);
                 break;
         }
     }
 
     //form post请求（不开放）
-    private <T> void post(String host, String url, HttpParams httpParams, SuperOkHttpCallBack<T> callback, boolean needGson) {
-        if (TextUtils.isEmpty(host)) {
+    private <T> void post(String host, String url, HttpParams
+            httpParams, final SuperOkHttpCallBack<T> callback) {
+        HLogF.d(Constant.HTTPTAG, "post请求");
+        if (TextUtils.isEmpty(host) && TextUtils.isEmpty(mBaseUrl)) {
             if (null != callback) {
-                callback.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, 0, "没有host");
+                callback.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, "没有host");
             }
             return;
         }
         //host有/
         boolean isHasHostIndex = false;
-        if (host.substring(host.length() - 1, host.length()).equals("/")) {
-            isHasHostIndex = true;
-        }
-        if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
-            url = url.substring(1, url.length());
-        }
+        if (!TextUtils.isEmpty(host))
+            if (host.substring(host.length() - 1, host.length()).equals("/")) {
+                isHasHostIndex = true;
+            }
+        if (!TextUtils.isEmpty(url))
+            if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
+                url = url.substring(1, url.length());
+            }
         if (null == httpParams) {
             httpParams = new HttpParams();
         }
         final String finalUrl = host + url;
 
-        Request.Builder requestBuilder = new Request.Builder();
+        PostRequest<String> postRequest = OkGo.<String>post(finalUrl)
+                .tag(this);
         //添加header
         Iterator<Map.Entry<String, Object>> headers = httpParams.getHeaders().entrySet().iterator();
         while (headers.hasNext()) {
             Map.Entry<String, Object> entry = headers.next();
             if (!TextUtils.isEmpty(entry.getKey()) && !TextUtils.isEmpty(entry.getValue().toString())) {
-                requestBuilder.addHeader(entry.getKey().trim(), entry.getValue().toString());
+                postRequest.headers(entry.getKey().trim(), entry.getValue().toString());
             }
         }
 
         //添加form参数
-        FormBody.Builder builder = new FormBody.Builder();
         Iterator<Map.Entry<String, Object>> params = httpParams.getParams().entrySet().iterator();
         while (params.hasNext()) {
             Map.Entry<String, Object> entry = params.next();
             if (!TextUtils.isEmpty(entry.getKey()) && !TextUtils.isEmpty(entry.getValue().toString())) {
-                builder.add(entry.getKey().trim(), entry.getValue().toString());
+                postRequest.params(entry.getKey().trim(), entry.getValue().toString());
             }
         }
         if (null != callback) {
             callback.start();
         }
-        Request requestPost = requestBuilder
-                .url(finalUrl)
-                .post(builder.build())
-                .tag(System.currentTimeMillis())
-                .build();
-        OkHttpUtils.getInstance().getOkHttpClient().newCall(requestPost).enqueue(new okhttp3.Callback() {
+
+        postRequest.execute(new StringCallback() {
             @Override
-            public void onFailure(Call call, IOException e) {
-                OkHttpUtils.getInstance().getPlatform().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        doError(call, finalUrl, e, callback);
-                    }
-                });
+            public void onSuccess(cn.berfy.sdk.http.http.okgo.model.Response<String> response) {
+                checkResultNew(response, callback);
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                OkHttpUtils.getInstance().getPlatform().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        checkResult(response, callback, needGson);
-                    }
-                });
+            public void onError(cn.berfy.sdk.http.http.okgo.model.Response<String> response) {
+                doError(finalUrl, response.getException(), callback);
             }
         });
     }
@@ -380,25 +448,30 @@ public class HttpApi {
     }
 
     //body json post请求
-    private <T> void postJson(String url, HttpParams httpParams, SuperOkHttpCallBack<T> callback, boolean needGson) {
-        postJson(mBaseUrl, url, httpParams, callback, needGson);
+    private <T> void postJson(String url, HttpParams
+            httpParams, SuperOkHttpCallBack<T> callback, boolean needGson) {
+        postJson(mBaseUrl, url, httpParams, callback);
     }
 
     //body json post请求
-    private <T> void postJson(String host, String url, HttpParams httpParams, SuperOkHttpCallBack<T> callback, boolean needGson) {
-        if (TextUtils.isEmpty(host)) {
+    private <T> void postJson(String host, String url, HttpParams
+            httpParams, final SuperOkHttpCallBack<T> callback) {
+        HLogF.d(Constant.HTTPTAG, "post请求(json)");
+        if (TextUtils.isEmpty(host) && TextUtils.isEmpty(mBaseUrl)) {
             if (null != callback)
-                callback.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, 0, "没有host");
+                callback.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, "没有host");
             return;
         }
         //host有/
         boolean isHasHostIndex = false;
-        if (host.substring(host.length() - 1, host.length()).equals("/")) {
-            isHasHostIndex = true;
-        }
-        if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
-            url = url.substring(1, url.length());
-        }
+        if (!TextUtils.isEmpty(host))
+            if (host.substring(host.length() - 1, host.length()).equals("/")) {
+                isHasHostIndex = true;
+            }
+        if (!TextUtils.isEmpty(url))
+            if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
+                url = url.substring(1, url.length());
+            }
         if (null == httpParams) {
             httpParams = new HttpParams();
         }
@@ -413,89 +486,65 @@ public class HttpApi {
         if (null != callback) {
             callback.start();
         }
-        //添加Json body参数
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json);
-        Request.Builder requestBuilder = new Request.Builder();
+
+        PostRequest<String> postRequest = OkGo.<String>post(finalUrl)
+                .tag(this);
+        postRequest.upJson(json);
         //添加header
         Iterator<Map.Entry<String, Object>> headers = httpParams.getHeaders().entrySet().iterator();
         while (headers.hasNext()) {
             Map.Entry<String, Object> entry = headers.next();
             if (!TextUtils.isEmpty(entry.getKey()) && !TextUtils.isEmpty(entry.getValue().toString())) {
-                requestBuilder.addHeader(entry.getKey().trim(), entry.getValue().toString());
+                postRequest.headers(entry.getKey().trim(), entry.getValue().toString());
             }
         }
-        Request requestPost = requestBuilder
-                .url(finalUrl)
-                .tag(System.currentTimeMillis())
-                .post(requestBody)
-                .build();
-        OkHttpUtils.getInstance().getOkHttpClient().newCall(requestPost).enqueue(new okhttp3.Callback() {
+        postRequest.execute(new StringCallback() {
             @Override
-            public void onFailure(Call call, IOException e) {
-                OkHttpUtils.getInstance().getPlatform().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        doError(call, finalUrl, e, callback);
-                    }
-                });
+            public void onSuccess(cn.berfy.sdk.http.http.okgo.model.Response<String> response) {
+                checkResultNew(response, callback);
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                OkHttpUtils.getInstance().getPlatform().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        checkResult(response, callback, needGson);
-                    }
-                });
+            public void onError(cn.berfy.sdk.http.http.okgo.model.Response<String> response) {
+                doError(finalUrl, response.getException(), callback);
             }
         });
     }
 
-    public void postFile(String url, String localPath, HttpCallBack callback) {
+    public <T> void postFile(String url, String localPath, SuperOkHttpCallBack<T> callback) {
         postFile(mBaseUrl, url, localPath, callback);
     }
 
-    public void postFile(String host, String url, String localPath, HttpCallBack callback) {
-        if (TextUtils.isEmpty(host)) {
-            if (null != callback) {
-                NetError netError = new NetError();
-                netError.statusCode = ServerStatusCodes.RET_CODE_SYSTEM_ERROR;
-                netError.errMsg = "没有host";
-                netError.usedTime = 0;
-                callback.onError(netError);
-            }
+    public <T> void postFile(String host, String url, String localPath, final SuperOkHttpCallBack<T> callback) {
+        if (TextUtils.isEmpty(host) && TextUtils.isEmpty(mBaseUrl)) {
+            if (null != callback)
+                callback.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, "没有host");
             return;
         }
         //host有/
         boolean isHasHostIndex = false;
-        if (host.substring(host.length() - 1, host.length()).equals("/")) {
-            isHasHostIndex = true;
-        }
-        if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
-            url = url.substring(1, url.length());
-        }
+        if (!TextUtils.isEmpty(host))
+            if (host.substring(host.length() - 1, host.length()).equals("/")) {
+                isHasHostIndex = true;
+            }
+        if (!TextUtils.isEmpty(url))
+            if (isHasHostIndex && !TextUtils.isEmpty(url) && url.substring(0, 1).equals("/")) {
+                url = url.substring(1, url.length());
+            }
         final String finalUrl = host + url;
-        SuperOkHttpCallBack<String> superOkHttpCallBack = new SuperOkHttpCallBack<String>(callback);
-        RequestCall requestCall = OkHttpUtils.postFile()
-                .file(new File(localPath))
-                .url(finalUrl)
-                .tag(System.currentTimeMillis())
-                .build();
-        requestCall.execute(new Callback<Response>() {
+
+        PostRequest<String> postRequest = OkGo.<String>post(finalUrl);
+        postRequest.tag(localPath);
+        postRequest.upFile(new File(localPath));
+        postRequest.execute(new StringCallback() {
             @Override
-            public Response parseNetworkResponse(Response response, int id) throws Exception {
-                return response;
+            public void onSuccess(cn.berfy.sdk.http.http.okgo.model.Response<String> response) {
+                checkResultNew(response, callback);
             }
 
             @Override
-            public void onError(Call call, Exception e, int id) {
-                doError(call, finalUrl, e, superOkHttpCallBack);
-            }
-
-            @Override
-            public void onResponse(Response response, int id) {
-                checkResult(response, superOkHttpCallBack, false);
+            public void onError(cn.berfy.sdk.http.http.okgo.model.Response<String> response) {
+                doError(finalUrl, response.getException(), callback);
             }
         });
     }
@@ -505,7 +554,7 @@ public class HttpApi {
         downFile(url, localPath, callBack);
     }
 
-    public void downFile(String url, String localPath, DownloadFileCallBack callBack) {
+    public void downFile(final String url, final String localPath, final DownloadFileCallBack callBack) {
         final Request request = new Request.Builder().tag(System.currentTimeMillis()).url(url).build();
         final Call call = OkHttpUtils.getInstance().getOkHttpClient().newCall(request);
         if (FileUtils.exists(localPath)) {
@@ -513,7 +562,7 @@ public class HttpApi {
                 @Override
                 public void run() {
                     if (null != callBack) {
-                        LogF.d(Constant.HTTPTAG, "保存成功 文件已经存在" + localPath);
+                        HLogF.d(Constant.HTTPTAG, "保存成功 文件已经存在" + localPath);
                         callBack.onSuccess(url, localPath);
                     }
                 }
@@ -537,7 +586,7 @@ public class HttpApi {
                     try {
                         long total = response.body().contentLength();
                         Log.e(Constant.HTTPTAG, "文件大小 total------>" + total);
-                        File file = new File(localPath);
+                        final File file = new File(localPath);
                         byte[] buf = new byte[2048];
                         int len = 0;
                         long current = 0;
@@ -553,13 +602,13 @@ public class HttpApi {
                             @Override
                             public void run() {
                                 if (null != callBack) {
-                                    LogF.d(Constant.HTTPTAG, "保存成功" + file.getAbsolutePath());
+                                    HLogF.d(Constant.HTTPTAG, "保存成功" + file.getAbsolutePath());
                                     callBack.onSuccess(url, file.getAbsolutePath());
                                 }
                             }
                         });
-                    } catch (IOException e) {
-                        LogF.d(Constant.HTTPTAG, "保存失败" + e.getMessage());
+                    } catch (final IOException e) {
+                        HLogF.d(Constant.HTTPTAG, "保存失败" + e.getMessage());
                         OkHttpUtils.getInstance().getPlatform().execute(new Runnable() {
                             @Override
                             public void run() {
@@ -576,8 +625,8 @@ public class HttpApi {
                             if (fos != null) {
                                 fos.close();
                             }
-                        } catch (IOException e) {
-                            LogF.d(Constant.HTTPTAG, "保存失败" + e.getMessage());
+                        } catch (final IOException e) {
+                            HLogF.d(Constant.HTTPTAG, "保存失败" + e.getMessage());
                             OkHttpUtils.getInstance().getPlatform().execute(new Runnable() {
                                 @Override
                                 public void run() {
@@ -593,207 +642,105 @@ public class HttpApi {
         }
     }
 
-    private void doError(Call call, String url, Exception e, SuperOkHttpCallBack callBack) {
-        long usedTime = null == call.request().tag() ? 0 : Long.valueOf(call.request().tag().toString());
+    private void doError(String url, Throwable e, SuperOkHttpCallBack callBack) {
         String msg = "";
         int statusCode = ServerStatusCodes.RET_CODE_SYSTEM_ERROR;
         if (!NetworkUtil.isNetAvailable(mContext)) {
             msg = "没有网络";
             statusCode = ServerStatusCodes.NO_NET;
+            HLogF.d(Constant.HTTPTAG, "请求失败doError\n" + url + "\n 没有网络");
+
         } else {
             if (null != e && null != e.getMessage()) {
-                if (e.getMessage().contains("after") && e.getMessage().contains("ms") && e.getMessage().startsWith("failed to connect to")) {
+                if ((e.getMessage().toLowerCase().contains("unknowhost")) ||
+                        (e.getMessage().toLowerCase().contains("sockettimeoutexception")) ||
+                        (e.getMessage().toLowerCase().contains("timeout")) ||
+                        (e.getMessage().toLowerCase().contains("after")
+                                && e.getMessage().contains("ms")
+                                && e.getMessage().startsWith("failed to connect to"))) {
                     msg = "请求超时";
-                    statusCode = ServerStatusCodes.RET_CODE_SYSTEM_ERROR;
+                    statusCode = ServerStatusCodes.RET_CODE_TIMEOUT;
                 } else {
-                    msg = "未知错误";
+                    msg = "数据格式不正确";
                     statusCode = ServerStatusCodes.RET_CODE_SYSTEM_ERROR;
                 }
             } else {
-                msg = "未知错误";
+                msg = "数据格式不正确 异常信息为空";
                 statusCode = ServerStatusCodes.RET_CODE_SYSTEM_ERROR;
                 msg += "\n" + e.getMessage() + "\n" + e.getCause();
-                LogF.d(Constant.HTTPTAG, "请求失败doError\n" + url + "\n" + e.getMessage() + "\n" + e.getCause());
             }
+            HLogF.d(Constant.HTTPTAG, "请求失败doError\n" + url + "\n" + e.getMessage() + "\n" + e.getCause());
         }
         if (null != callBack) {
-            callBack.error(statusCode, System.currentTimeMillis() - usedTime, msg);
-            callBack.errorDetail(statusCode, statusCode);
+            callBack.error(statusCode, msg);
         }
         if (null != mOnStatusListener) {
-            mOnStatusListener.statusCodeError(statusCode, System.currentTimeMillis() - usedTime);
+            mOnStatusListener.statusCodeError(statusCode, msg);
         }
     }
 
     //拦截错误
-    private void checkResult(Response response, SuperOkHttpCallBack callBack, boolean needGson) {
-        long usedTime = null == response.request().tag() ? 0 : Long.valueOf(response.request().tag().toString());
-        if (null == response) {
-            LogF.d(Constant.HTTPTAG, "请求错误response==null");
+    private <T> void checkResultNew(cn.berfy.sdk.http.http.okgo.model.Response<String>
+                                            response, SuperOkHttpCallBack callBack) {
+        if (!NetworkUtil.isNetAvailable(mContext)) {
             if (null != callBack) {
-                callBack.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, System.currentTimeMillis() - usedTime, "返回值为空");
-                callBack.errorDetail(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, ServerStatusCodes.RET_CODE_SYSTEM_ERROR);
+                callBack.error(ServerStatusCodes.NO_NET, "没有网络");
             }
             if (null != mOnStatusListener) {
-                mOnStatusListener.statusCodeError(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, System.currentTimeMillis() - usedTime);
+                mOnStatusListener.statusCodeError(ServerStatusCodes.NO_NET, "没有网络");
             }
-            return;
-        }
-        if (null == response.body()) {
-            LogF.d(Constant.HTTPTAG, "请求错误null == response.body()");
-            if (null != callBack) {
-                callBack.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, System.currentTimeMillis() - usedTime, "返回值为空");
-                callBack.errorDetail(response.code(), ServerStatusCodes.RET_CODE_SYSTEM_ERROR);
-            }
-            return;
-        }
-        //只单独拦截了404
-//        if (response.code() == 404) {
-//            LogF.d(Constant.HTTPTAG, "请求错误404");
-//            callBack.errorDetail(response.code(), ServerStatusCodes.RET_CODE_SYSTEM_ERROR);
-//            if (null != callBack) {
-//                callBack.error("请求错误404");
-//            }
-//            if (null != mOnStatusListener) {
-//                mOnStatusListener.statusCodeError(404);
-//            }
-//            return;
-//        }
-        if (response.code() >= 200 && response.code() <= 300) {//状态码
-            try {
-                String resultJson = response.body().string();
-//                JSONObject json = new JSONObject(resultJson);
-//                int code = json.optInt("code");
-//                String msg = json.optString("msg");
-//                String data = json.optString("res");
-//                switch (code) {
-////                    case ServerStatusCodes.RET_CODE_NOT_LOGIN://未登录，切换服务器，闪退心跳包丢失都会造成与后台session失效
-////                        LogF.d(HttpConstants.HTTPTAG, "---检测到您的账号没有登录 未登录，切换服务器，闪退心跳包丢失都会造成与后台session失效---");
-////                        if (null != mOnStatusListener) {
-////                            mOnStatusListener.toLogin(msg);
-////                        }
-////                        //标记状态 否则不会退出登录
-////                        BaseApplication.setIsSeize(true);
-////                        break;
-////                    case ServerStatusCodes.RET_CODE_ROBBED://被踢
-////                        LogF.d(HttpConstants.HTTPTAG, "---检测到您的账号在另外一台设备上登录---");
-////                        //标记状态 否则不会退出登录
-////                        BaseApplication.setIsSeize(true);
-////                        break;
-////                    case ServerStatusCodes.RET_CODE_FROZEN://账号被冻结
-////                        LogF.d(HttpConstants.HTTPTAG, "---账号被冻结---");
-////                        if (null != mOnStatusListener) {
-////                            mOnStatusListener.frozenAccount(msg);
-////                        }
-////                        break;
-////                    case ServerStatusCodes.RET_CODE_FORCED_UPDATE://强制更新
-////                        ApkDownloadUrl apkDownloadUrl = GsonUtil.getInstance().toClass(data, ApkDownloadUrl.class);
-////                        LogF.d(HttpConstants.HTTPTAG, "---检测到有新的版本，需要强制更新---");
-////                        if (null != apkDownloadUrl) {
-////                            LogF.d(HttpConstants.HTTPTAG, "---下载地址" + apkDownloadUrl.dowload_url);
-////                            if (null != mOnStatusListener) {
-////                                mOnStatusListener.forcedUpdate(msg, apkDownloadUrl.dowload_url);
-////                            }
-////                        }
-////                        break;
-//                    default:
-//                        if (null != callBack) {
-//                            callBack.finish(resultJson);
-//                        }
-//                        break;
-//                }
+            HLogF.d(Constant.HTTPTAG, "请求失败checkResultNew\n 没有网络");
+        } else {
+            if (null == response) {
+                HLogF.d(Constant.HTTPTAG, "请求错误response==null");
                 if (null != callBack) {
-                    callBack.finish(response.code(), System.currentTimeMillis() - usedTime, resultJson, needGson);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                LogF.d(Constant.HTTPTAG, "请求错误码解析出错" + e.getMessage());
-                if (null != callBack) {
-//                callBack.error(DataUtil.getString(R.string.data_network, context));
-                    callBack.errorDetail(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, ServerStatusCodes.RET_CODE_SYSTEM_ERROR);
-                    callBack.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, System.currentTimeMillis() - usedTime, e.getMessage());
+                    callBack.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, "返回值为空");
                 }
                 if (null != mOnStatusListener) {
-                    mOnStatusListener.statusCodeError(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, System.currentTimeMillis() - usedTime);
+                    mOnStatusListener.statusCodeError(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, "返回值为空");
                 }
+                return;
             }
-        } else {
-            if (null != mOnStatusListener) {
-                mOnStatusListener.statusCodeError(response.code(), System.currentTimeMillis() - usedTime);
+            if (null == response.body()) {
+                HLogF.d(Constant.HTTPTAG, "请求错误null == response.body()");
+                if (null != callBack) {
+                    callBack.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, "返回值为空");
+                }
+                return;
             }
-        }
-    }
-
-    /**
-     * @param userAgent
-     * @return 去除非法字符
-     */
-    private String getValidUA(String userAgent) {
-        if (TextUtils.isEmpty(userAgent)) {
-            return "android";
-        }
-        String validUA = "android";
-        String uaWithoutLine = userAgent.replace("\n", "");
-        for (int i = 0, length = uaWithoutLine.length(); i < length; i++) {
-            char c = userAgent.charAt(i);
-            if (c <= '\u001f' || c >= '\u007f') {
+            //只单独拦截了404
+            if (response.code() == 404) {
+                HLogF.d(Constant.HTTPTAG, "请求错误404");
+                if (null != callBack) {
+                    callBack.error(response.code(), "请求错误404");
+                }
+                if (null != mOnStatusListener) {
+                    mOnStatusListener.statusCodeError(404, "请求错误404");
+                }
+                return;
+            }
+            if (response.code() >= 200 && response.code() <= 300) {//状态码
                 try {
-                    validUA = URLEncoder.encode(uaWithoutLine, "UTF-8");
-                } catch (UnsupportedEncodingException e) {
+                    if (null != callBack) {
+                        HLogF.d(Constant.HTTPTAG, "解析正确" + response.body().getClass().getName());
+                        callBack.finish(response);
+                    }
+                } catch (Exception e) {
                     e.printStackTrace();
+                    HLogF.d(Constant.HTTPTAG, "请求错误码解析出错" + e.getMessage());
+                    if (null != callBack) {
+                        callBack.error(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, e.getMessage());
+                    }
+                    if (null != mOnStatusListener) {
+                        mOnStatusListener.statusCodeError(ServerStatusCodes.RET_CODE_SYSTEM_ERROR, "返回值解析出错");
+                    }
                 }
-                return validUA;
+            } else {
+                HLogF.d(Constant.HTTPTAG, "请求失败checkResultNew\n code=" + response.code() + "\n请求错误");
+                if (null != mOnStatusListener) {
+                    mOnStatusListener.statusCodeError(response.code(), "请求错误");
+                }
             }
         }
-        return uaWithoutLine;
     }
-
-    public String encode3Des(String str) {
-        return Des.encode(get3DesKey(), str);
-    }
-
-    public String decode3Des(String desStr) {
-        return Des.decode(get3DesKey(), desStr);
-    }
-
-    public String encodeMD5(boolean isUpper, String str) {
-        return encodeMd5JNI(isUpper, str);
-    }
-
-    public String encodeBase64(String str) {
-        return encodeBase64JNI(str);
-    }
-
-    public String decodeBase64(String str) {
-        return decodeBase64JNI(str);
-    }
-
-    //加载so库
-    static {
-        System.loadLibrary("httpjni");
-    }
-
-    //md5加密
-    private static native String encodeMd5JNI(boolean isUpper, String text);
-
-    //base64加密
-    private static native String encodeBase64JNI(String text);
-
-    //base64解密
-    private static native String decodeBase64JNI(String base64);
-
-    //DES加密
-//    public static native int encode3DES(byte[] aes, byte[] key, byte[] py);
-
-    //DES解密
-//    public static native int decode3DES(byte[] key, byte[] py, byte[] result);
-
-    //获取DES key
-    private static native String getDesKey();
-
-    //获取3DES key
-    private static native String get3DesKey();
-
-    //获取DES idcard
-    private static native String getDesCipher();
 }

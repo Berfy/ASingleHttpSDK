@@ -32,7 +32,7 @@ class DemoHttpPresenter : BasePresenter<IDemoHttpView>() {
         }
     }
 
-    fun checkUpdate(version: String, observer: Observer<Data<*>>) {
+    fun checkUpdate(version: String, observer: Observer<Data>) {
         mCompositeSubscription!!.add(DemoHttpApi.instance?.server?.checkUpdate(version)
                 ?.subscribeOn(Schedulers.io())
                 ?.observeOn(AndroidSchedulers.mainThread())

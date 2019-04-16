@@ -20,7 +20,7 @@ public class Hmac {
             }
             return md5(s.getBytes("ASCII"));
         } catch (UnsupportedEncodingException e) {
-            LogF.d(TAG, "-----hmac sign " + e.getMessage());
+            HLogF.d(TAG, "-----hmac sign " + e.getMessage());
         }
         return null;
     }
@@ -45,7 +45,7 @@ public class Hmac {
             }
             sEncodedString = hash.toString();
         } catch (Exception e) {
-            LogF.d(TAG, "-----hmac sign " + e.getMessage());
+            HLogF.d(TAG, "-----hmac sign " + e.getMessage());
         }
         return sEncodedString;
     }

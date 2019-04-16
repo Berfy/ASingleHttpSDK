@@ -15,7 +15,7 @@ import rx.Observable
 interface RetrofitService {
 
     @GET("api/v1/update_prompt")
-    fun checkUpdate(@Query("version") version: String): Observable<Data<*>>
+    fun checkUpdate(@Query("version") version: String): Observable<Data>
 
     @POST("book/search")
     @FormUrlEncoded

@@ -1,9 +1,6 @@
 package cn.berfy.sdk.demohttp.model
 
-class Data<T> {
+class Data : BaseResponse() {
 
-    var data: T? = null
-    var code: Int = 0
-    var msg: String? = null
-    var err_msg: String? = null
+    var data: String = ""
 }

@@ -2,7 +2,7 @@ package cn.berfy.sdk.http.util;
 
 import android.util.Base64;
 
-import cn.berfy.sdk.http.http.okhttp.utils.LogF;
+import cn.berfy.sdk.http.http.okhttp.utils.HLogF;
 
 import java.security.Key;
 
@@ -54,14 +54,14 @@ public class Des {
     // 对密钥进行处理
     private static Key getRawKey(String key) throws Exception {
         if (ALGORITHM.indexOf("desede") != -1) {//3DES加密
-            LogF.d(TAG, "3DES方式");
+            HLogF.d(TAG, "3DES方式");
             DESedeKeySpec deSedeKeySpec = new DESedeKeySpec(key.getBytes());
             SecretKeyFactory keyfactory = SecretKeyFactory
                     .getInstance(ALGORITHM);
             return keyfactory.generateSecret(deSedeKeySpec);
         }
 
-        LogF.d(TAG, "DES方式");
+        HLogF.d(TAG, "DES方式");
         DESKeySpec dks = new DESKeySpec(key.getBytes());
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(ALGORITHM);
         return keyFactory.generateSecret(dks);
@@ -90,14 +90,14 @@ public class Des {
      * @return 加密后的字节数组，一般结合Base64编码使用
      */
     public static String encode(String key, byte[] data) {
-        LogF.d(TAG, "加密");
+        HLogF.d(TAG, "加密");
         try {
             Cipher cipher = Cipher.getInstance(ALGORITHM + WORK_MODE + MODE_TIANCHONG);
             if (WORK_MODE.indexOf("ECB") != -1) {
-                LogF.d(TAG, "ECB模式 " + ALGORITHM + WORK_MODE + MODE_TIANCHONG);
+                HLogF.d(TAG, "ECB模式 " + ALGORITHM + WORK_MODE + MODE_TIANCHONG);
                 cipher.init(Cipher.ENCRYPT_MODE, getRawKey(key));
             } else {
-                LogF.d(TAG, "偏移模式 " + ALGORITHM + WORK_MODE + MODE_TIANCHONG);
+                HLogF.d(TAG, "偏移模式 " + ALGORITHM + WORK_MODE + MODE_TIANCHONG);
                 IvParameterSpec iv = new IvParameterSpec(IVPARAMETERSPEC.getBytes());
                 cipher.init(Cipher.ENCRYPT_MODE, getRawKey(key), iv);
             }
@@ -130,14 +130,14 @@ public class Des {
      * @return 解密后的字节数组
      */
     public static String decode(String key, byte[] data) {
-        LogF.d(TAG, "解密");
+        HLogF.d(TAG, "解密");
         try {
             Cipher cipher = Cipher.getInstance(ALGORITHM + WORK_MODE + MODE_TIANCHONG);
             if (WORK_MODE.indexOf("ECB") != -1) {
-                LogF.d(TAG, "ECB模式 " + ALGORITHM + WORK_MODE + MODE_TIANCHONG);
+                HLogF.d(TAG, "ECB模式 " + ALGORITHM + WORK_MODE + MODE_TIANCHONG);
                 cipher.init(Cipher.DECRYPT_MODE, getRawKey(key));
             } else {
-                LogF.d(TAG, "偏移模式 " + ALGORITHM + WORK_MODE + MODE_TIANCHONG);
+                HLogF.d(TAG, "偏移模式 " + ALGORITHM + WORK_MODE + MODE_TIANCHONG);
                 IvParameterSpec iv = new IvParameterSpec(IVPARAMETERSPEC.getBytes());
                 cipher.init(Cipher.DECRYPT_MODE, getRawKey(key), iv);
             }

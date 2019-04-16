@@ -3,23 +3,19 @@ package cn.berfy.sdk.demohttp.util
 import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
-import android.content.res.Resources
-import android.graphics.Matrix
 import android.graphics.Point
 import android.os.Build
 import android.util.DisplayMetrics
 import android.util.TypedValue
-import android.view.Display
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import android.widget.ImageView
-import cn.berfy.sdk.http.http.okhttp.utils.LogF
+import cn.berfy.sdk.http.http.okhttp.utils.HLogF
 
 import java.lang.reflect.Field
 
@@ -150,7 +146,7 @@ object DisplayUtil {
                 // 获得ImageView中Image的真实宽高，
                 val dw = imageView.drawable.bounds.width()
                 val dh = imageView.drawable.bounds.height()
-                LogF.d("lxy", "drawable_X = $dw, drawable_Y = $dh")
+                HLogF.d("lxy", "drawable_X = $dw, drawable_Y = $dh")
 
                 // 获得ImageView中Image的变换矩阵
                 val m = imageView.imageMatrix
@@ -160,12 +156,12 @@ object DisplayUtil {
                 // Image在绘制过程中的变换矩阵，从中获得x和y方向的缩放系数
                 val sx = values[0]
                 val sy = values[4]
-                LogF.d("lxy", "scale_X = $sx, scale_Y = $sy")
+                HLogF.d("lxy", "scale_X = $sx, scale_Y = $sy")
 
                 // 计算Image在屏幕上实际绘制的宽高
                 val cw = (dw * sx).toInt()
                 val ch = (dh * sy).toInt()
-                LogF.d("lxy", "caculate_W = $cw, caculate_H = $ch")
+                HLogF.d("lxy", "caculate_W = $cw, caculate_H = $ch")
 
                 val lp = imageView.layoutParams
                 lp.height = ch

@@ -2,8 +2,9 @@ package cn.berfy.sdk.http.http.interceptor;
 
 import cn.berfy.sdk.http.callback.OnStatusListener;
 import cn.berfy.sdk.http.http.okhttp.utils.GsonUtil;
-import cn.berfy.sdk.http.http.okhttp.utils.LogF;
+import cn.berfy.sdk.http.http.okhttp.utils.HLogF;
 import cn.berfy.sdk.http.model.HttpParams;
+
 import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
@@ -51,9 +52,9 @@ public class Md5SignInterceptor implements Interceptor {
             RequestBody requestBody = request.body();
             boolean hasRequestBody = requestBody != null;
             if (!hasRequestBody) {
-                LogF.d(TAG, "------" + request.method());
+                HLogF.d(TAG, "------" + request.method());
             } else if (bodyEncoded(request.headers())) {
-                LogF.d(TAG, "------" + request.method() + " (encoded body omitted)");
+                HLogF.d(TAG, "------" + request.method() + " (encoded body omitted)");
             } else {
                 if (request.body().contentType().toString().contains("application/json")) {
                     request = addPostParamsJson(request);
@@ -106,7 +107,8 @@ public class Md5SignInterceptor implements Interceptor {
                     Iterator<Map.Entry<String, Object>> params = formatParams.getParams().entrySet().iterator();
                     while (params.hasNext()) {
                         Map.Entry<String, Object> entry = params.next();
-                        httpBuilder.addQueryParameter(entry.getKey().trim(), entry.getValue().toString());
+                        HLogF.d(TAG, "HTTP全局参数 key=" + entry.getKey().trim() + " value=" + (null == entry.getValue() ? "" : entry.getValue().toString()));
+                        httpBuilder.addQueryParameter(entry.getKey().trim(), (null == entry.getValue() ? "" : entry.getValue().toString()));
                     }
                 }
                 if (null != formatParams.getHeaders()) {//需要添加头部
@@ -134,7 +136,7 @@ public class Md5SignInterceptor implements Interceptor {
         if (request.body() instanceof FormBody) {
             formBody = (FormBody) request.body();
             for (int i = 0; i < formBody.size(); i++) {
-//                LogF.d("有没有东西", formBody.encodedName(i) + "====" + formBody.encodedValue(i));
+//                HLogF.d("有没有东西", formBody.encodedName(i) + "====" + formBody.encodedValue(i));
                 bodyBuilder.addEncoded(formBody.encodedName(i), formBody.encodedValue(i));
             }
         }
@@ -165,14 +167,14 @@ public class Md5SignInterceptor implements Interceptor {
                     Iterator<Map.Entry<String, Object>> params = formatParams.getParams().entrySet().iterator();
                     while (params.hasNext()) {
                         Map.Entry<String, Object> entry = params.next();
-                        bodyBuilder.addEncoded(entry.getKey().trim(), entry.getValue().toString());
+                        bodyBuilder.addEncoded(entry.getKey().trim(), null == entry.getValue() ? "" : entry.getValue().toString());
                     }
                 }
                 if (null != formatParams.getHeaders()) {//需要添加头部
                     Iterator<Map.Entry<String, Object>> headers = formatParams.getHeaders().entrySet().iterator();
                     while (headers.hasNext()) {
                         Map.Entry<String, Object> entry = headers.next();
-                        builder.addHeader(entry.getKey().trim(), entry.getValue().toString());
+                        builder.addHeader(entry.getKey().trim(), null == entry.getValue() ? "" : entry.getValue().toString());
                     }
                 }
             }
@@ -216,14 +218,14 @@ public class Md5SignInterceptor implements Interceptor {
                         Iterator<Map.Entry<String, Object>> params = formatParams.getParams().entrySet().iterator();
                         while (params.hasNext()) {
                             Map.Entry<String, Object> entry = params.next();
-                            jsonObject.put(entry.getKey().trim(), entry.getValue().toString());
+                            jsonObject.put(entry.getKey().trim(), null == entry.getValue() ? "" : entry.getValue().toString());
                         }
                     }
                     if (null != formatParams.getHeaders()) {//需要添加头部
                         Iterator<Map.Entry<String, Object>> headers = formatParams.getHeaders().entrySet().iterator();
                         while (headers.hasNext()) {
                             Map.Entry<String, Object> entry = headers.next();
-                            builder.addHeader(entry.getKey().trim(), entry.getValue().toString());
+                            builder.addHeader(entry.getKey().trim(), null == entry.getValue() ? "" : entry.getValue().toString());
                         }
                     }
                 }

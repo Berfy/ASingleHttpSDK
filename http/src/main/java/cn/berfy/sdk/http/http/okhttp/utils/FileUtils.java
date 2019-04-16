@@ -70,12 +70,12 @@ public class FileUtils {
         // 如果文件路径所对应的文件存在，并且是一个文件，则直接删除
         if (file.exists() && file.isFile()) {
             if (file.delete()) {
-                LogF.d(TAG, "删除单个文件" + filePath + "成功！");
+                HLogF.d(TAG, "删除单个文件" + filePath + "成功！");
             } else {
-                LogF.d(TAG, "删除单个文件" + filePath + "失败！");
+                HLogF.d(TAG, "删除单个文件" + filePath + "失败！");
             }
         } else {
-            LogF.d(TAG, "删除单个文件失败：" + filePath + "不存在！");
+            HLogF.d(TAG, "删除单个文件失败：" + filePath + "不存在！");
         }
     }
 
@@ -123,7 +123,7 @@ public class FileUtils {
                 flag = delAllFile(directoryPath + "/" + filePath);
             }
         }
-        LogF.e(TAG, "删除文件" + flag + "  " + directoryPath);
+        HLogF.e(TAG, "删除文件" + flag + "  " + directoryPath);
         return flag;
     }
 
@@ -169,11 +169,11 @@ public class FileUtils {
             int res = context.getContentResolver().delete(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                     MediaStore.Video.Media.DATA + "= \"" + filePath + "\"",
                     null);
-            LogF.d(TAG, "-----delete res =" + res);
+            HLogF.d(TAG, "-----delete res =" + res);
             if (res > 0) {
                 return file.delete();
             } else {
-                LogF.e(TAG, "删除文件失败");
+                HLogF.e(TAG, "删除文件失败");
             }
         } else if (filePath.endsWith(".jpg") || filePath.endsWith(".png") || filePath.endsWith(".bmp")) {
             int res = context.getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -182,7 +182,7 @@ public class FileUtils {
             if (res > 0) {
                 return file.delete();
             } else {
-                LogF.e(TAG, "删除文件失败");
+                HLogF.e(TAG, "删除文件失败");
             }
         } else {
             return file.delete();
@@ -250,7 +250,7 @@ public class FileUtils {
             size = fis.available();
         } else {
             file.createNewFile();
-            LogF.e("获取文件大小", "文件不存在!");
+            HLogF.e("获取文件大小", "文件不存在!");
         }
         return size;
     }
@@ -322,7 +322,7 @@ public class FileUtils {
 
     // 创建文件
     public static boolean createFile(File file) {
-        LogF.i("创建文件", "===========>" + file.getPath());
+        HLogF.i("创建文件", "===========>" + file.getPath());
         try {
             if (file.exists()) {
                 return true;

@@ -1,6 +1,7 @@
 package cn.berfy.sdk.http.http.okhttp.utils;
 
 import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
 
 import java.lang.reflect.Type;
 
@@ -38,5 +39,9 @@ public class GsonUtil {
 
     public <T> T toClass(String json, Type type) {
         return mGson.fromJson(json, type);
+    }
+
+    public <T> T toClass(JsonReader jsonReader, Type type) {
+        return mGson.fromJson(jsonReader, type);
     }
 }

@@ -4,7 +4,7 @@ import android.content.Context;
 
 import cn.berfy.sdk.http.callback.OnStatusListener;
 import cn.berfy.sdk.http.config.Constant;
-import cn.berfy.sdk.http.http.okhttp.utils.LogF;
+import cn.berfy.sdk.http.http.okhttp.utils.HLogF;
 import cn.berfy.sdk.http.http.okhttp.utils.SharedPreferenceUtils;
 
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class ReceivedCookiesInterceptor implements Interceptor {
             SharedPreferenceUtils.put(mContext, Constant.COOKIE, sb.toString());
 
             if (Constant.DEBUG)
-                LogF.d(TAG, "接受到的cookie---" + sb.toString());
+                HLogF.d(TAG, "接受到的cookie---" + sb.toString());
         }
         return response;
     }

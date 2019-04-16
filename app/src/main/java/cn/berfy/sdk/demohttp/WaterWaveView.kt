@@ -27,7 +27,7 @@ class WaterWaveView : View {
     private val mPaint2 = Paint()//近处
     var isRunning: Boolean = false
         private set
-    private val FPS = 80// fps
+    private val FPS = 30// fps
     private var mAngle1 = 0f//远处远处波浪角度1
     private var mAngle2 = 180f//近处波浪角度2
     private val mWaterSin = 30f// 睡眠波浪振幅 数值越大波浪越大
@@ -40,7 +40,7 @@ class WaterWaveView : View {
     private var mRefreshThread3: Thread? = null
     private var mAddThread: Thread? = null
     private var mDrawFilter: PaintFlagsDrawFilter? = null
-    private val mMaxWaterCount = 50
+    private val mMaxWaterCount = 20
     private val mRandom = Random()
     private val mWaters = ArrayList<Water>()
     private val mAddWaters = ArrayList<Water>()
@@ -124,7 +124,7 @@ class WaterWaveView : View {
                                 } else {
                                     water.y -= ((moveTime + moveTime * 3) / 200).toFloat()
                                 }
-                                //                                    LogF.d("水滴刷新", "===高度" + mHeight + "   " + water.x + "," + water.y + "  " + water.size);
+                                //                                    HLogF.d("水滴刷新", "===高度" + mHeight + "   " + water.x + "," + water.y + "  " + water.size);
                             }
                         }
                         mHandler.sendEmptyMessage(0)
@@ -179,7 +179,7 @@ class WaterWaveView : View {
                                 } else {
                                     water.y -= ((moveTime + moveTime * 3) / 600).toFloat()
                                 }
-                                //                                    LogF.d("水滴刷新", "===高度" + mHeight + "   " + water.x + "," + water.y + "  " + water.size);
+                                //                                    HLogF.d("水滴刷新", "===高度" + mHeight + "   " + water.x + "," + water.y + "  " + water.size);
                             }
                         }
                         mHandler.sendEmptyMessage(0)
@@ -234,7 +234,7 @@ class WaterWaveView : View {
                                 } else {
                                     water.y -= ((moveTime + moveTime * 3) / 800).toFloat()
                                 }
-                                //                                    LogF.d("水滴刷新", "===高度" + mHeight + "   " + water.x + "," + water.y + "  " + water.size);
+                                //                                    HLogF.d("水滴刷新", "===高度" + mHeight + "   " + water.x + "," + water.y + "  " + water.size);
                             }
                         }
                         mHandler.sendEmptyMessage(0)
@@ -270,7 +270,7 @@ class WaterWaveView : View {
                             water.y = mRandom.nextInt(mHeight / 4).toFloat()
                             water.rawTime = System.currentTimeMillis() - (3000 * (water.y * 0.1 / (mHeight * 0.1))).toLong()
                             mAddWaters.add(water)
-                            //                                LogF.d("水滴增加", " " + water.x + "," + water.y + "  " + water.size);
+                            //                                HLogF.d("水滴增加", " " + water.x + "," + water.y + "  " + water.size);
                             //                                    mHandler.sendEmptyMessage(0);
                             //                                    postInvalidate();
                         }
@@ -306,7 +306,7 @@ class WaterWaveView : View {
                     matrix.postScale(water.size, water.size)
                     matrix.postTranslate(water.x, water.y)
                     canvas.drawBitmap(water.water!!, matrix, mPaint1)
-                    //                    LogF.d("水滴", "==="
+                    //                    HLogF.d("水滴", "==="
                     //                            + water.x + "," + water.y + "  " + water.size);
                 }
             }

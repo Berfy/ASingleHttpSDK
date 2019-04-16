@@ -1,5 +1,7 @@
 package cn.berfy.sdk.http.model;
 
+import cn.berfy.sdk.http.config.ServerStatusCodes;
+
 /**
  * Created by Berfy on 2017/12/15.
  * http请求集合类
@@ -12,8 +14,15 @@ package cn.berfy.sdk.http.model;
 public class NetError {
 
     public int statusCode;
-    public long usedTime;//ms
     public String errMsg;
+
+    public boolean isTimeOut() {
+        return statusCode == ServerStatusCodes.RET_CODE_TIMEOUT;
+    }
+
+    public boolean isNoNet() {
+        return statusCode == ServerStatusCodes.NO_NET;
+    }
 
 //    public boolean isOk() {
 //        if (null != netMessage && netMessage.code == 1) {

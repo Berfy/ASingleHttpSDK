@@ -2,6 +2,8 @@ package cn.berfy.sdk.http.model;
 
 import java.util.LinkedHashMap;
 
+import cn.berfy.sdk.http.http.okgo.model.HttpHeaders;
+
 public class HttpParams {
 
     private LinkedHashMap<String, Object> mHeaders;
@@ -9,6 +11,17 @@ public class HttpParams {
     private POST_TYPE mPostContentType;
 
     public HttpParams putParam(String key, Object value) {
+        // TODO Auto-generated method stub
+        if (null == mParams) {
+            mParams = new LinkedHashMap<String, Object>();
+        }
+        if (!mParams.containsKey(key)) {
+            mParams.put(key, value);
+        }
+        return this;
+    }
+
+    public HttpParams putParams(String key, Object value) {
         // TODO Auto-generated method stub
         if (null == mParams) {
             mParams = new LinkedHashMap<String, Object>();
@@ -36,6 +49,16 @@ public class HttpParams {
         }
         if (!mHeaders.containsKey(key)) {
             mHeaders.put(key, value);
+        }
+        return this;
+    }
+
+    public HttpParams putHeaders(HttpHeaders httpHeaders) {
+        if (null == mHeaders) {
+            mHeaders = new LinkedHashMap<String, Object>();
+        }
+        if (null != httpHeaders) {
+            mHeaders.putAll(httpHeaders.headersMap);
         }
         return this;
     }

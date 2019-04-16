@@ -3,7 +3,7 @@ package cn.berfy.sdk.http.http.okhttp.log;
 import android.text.TextUtils;
 import android.util.Log;
 
-import cn.berfy.sdk.http.http.okhttp.utils.LogF;
+import cn.berfy.sdk.http.http.okhttp.utils.HLogF;
 
 import java.io.IOException;
 
@@ -47,36 +47,36 @@ public class LoggerInterceptor implements Interceptor {
     private Response logForResponse(Request request, Response response) {
         try {
             //===>response log
-            LogF.d(tag, "========response'log=======start");
+            HLogF.d(tag, "========response'log=======start");
             Response.Builder builder = response.newBuilder();
             Response clone = builder.build();
-            LogF.d(tag, "耗时 : " + (System.currentTimeMillis() - Long.valueOf(request.tag() + "")) + "ms");
-            LogF.d(tag, "method : " + clone.request().method());
-            LogF.d(tag, "url : " + clone.request().url());
-            LogF.d(tag, "code : " + clone.code());
-            LogF.d(tag, "protocol : " + clone.protocol());
+//            HLogF.d(tag, "耗时 : " + (System.currentTimeMillis() - Long.valueOf(request.tag() + "")) + "ms");
+            HLogF.d(tag, "| method : " + clone.request().method());
+            HLogF.d(tag, "| url : " + clone.request().url());
+            HLogF.d(tag, "| code : " + clone.code());
+            HLogF.d(tag, "| protocol : " + clone.protocol());
             if (!TextUtils.isEmpty(clone.message()))
-                LogF.d(tag, "message : " + clone.message());
+                HLogF.d(tag, "| message : " + clone.message());
 
             if (showResponse) {
                 ResponseBody body = clone.body();
                 if (body != null) {
                     MediaType mediaType = body.contentType();
                     if (mediaType != null) {
-                        LogF.d(tag, "responseBody's contentType : " + mediaType.toString());
+                        HLogF.d(tag, "| responseBody's contentType : " + mediaType.toString());
                         if (isText(mediaType)) {
                             String resp = body.string();
                             String newResult = new String(resp);
-                            LogF.d(tag, "responseBody's content : " + resp);
+                            HLogF.d(tag, "| responseBody's content : " + resp);
                             body = ResponseBody.create(mediaType, newResult);
                             response = response.newBuilder().body(body).build();
                         } else {
-                            LogF.d(tag, "responseBody's content : " + " maybe [file part] , too large too print , ignored!");
+                            HLogF.d(tag, "| responseBody's content : " + " maybe [file part] , too large too print , ignored!");
                         }
                     }
                 }
             }
-            LogF.d(tag, "========response'log=======end");
+            HLogF.d(tag, "========response'log=======end");
         } catch (Exception e) {
 //            e.printStackTrace();
         }
@@ -88,26 +88,26 @@ public class LoggerInterceptor implements Interceptor {
         try {
             String url = request.url().toString();
             Headers headers = request.headers();
-            LogF.d(tag, "========request'log=======start");
-            LogF.d(tag, "method : " + request.method());
-            LogF.d(tag, "url : " + url);
+            HLogF.d(tag, "========request'log=======start");
+            HLogF.d(tag, "| method : " + request.method());
+            HLogF.d(tag, "| url : " + url);
             if (headers != null && headers.size() > 0) {
-                Log.e(tag, "headers : " + headers.toString());
+                Log.d(tag, "| headers : " + headers.toString());
             }
             RequestBody requestBody = request.body();
             if (requestBody != null) {
                 MediaType mediaType = requestBody.contentType();
-                LogF.d(tag, "requestBody's contentLength : " + requestBody.contentLength());
+                HLogF.d(tag, "| requestBody's contentLength : " + requestBody.contentLength());
                 if (mediaType != null) {
-                    LogF.d(tag, "requestBody's contentType : " + mediaType.toString());
+                    HLogF.d(tag, "| requestBody's contentType : " + mediaType.toString());
                     if (isText(mediaType)) {
-                        LogF.d(tag, "requestBody's content : " + bodyToString(request));
+                        HLogF.d(tag, "| requestBody's content : " + bodyToString(request));
                     } else {
-                        LogF.d(tag, "requestBody's content : " + " maybe [file part] , too large too print , ignored!");
+                        HLogF.d(tag, "| requestBody's content : " + " maybe [file part] , too large too print , ignored!");
                     }
                 }
             }
-            LogF.d(tag, "========request'log=======end");
+            HLogF.d(tag, "========request'log=======end");
         } catch (Exception e) {
 //            e.printStackTrace();
         }

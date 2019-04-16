@@ -1,7 +1,6 @@
 package cn.berfy.sdk.demohttp
 
 import android.Manifest
-import android.content.Context
 import android.graphics.Bitmap
 import android.net.http.SslError
 import android.os.Build
@@ -19,15 +18,14 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.RelativeLayout
 import android.widget.TextView
+import cn.berfy.sdk.demohttp.model.BaseResponse
 
 import com.axingxing.demohttp.R
 import com.hjq.permissions.OnPermission
 import com.hjq.permissions.XXPermissions
 
-import java.util.ArrayList
-
 import cn.berfy.sdk.demohttp.model.Data
-import cn.berfy.sdk.demohttp.rxjavademo.DemoHttpApi
+import cn.berfy.sdk.demohttp.model.HomeTabsBean
 import cn.berfy.sdk.demohttp.rxjavademo.model.Book
 import cn.berfy.sdk.demohttp.rxjavademo.presenter.DemoHttpPresenter
 import cn.berfy.sdk.demohttp.rxjavademo.view.IDemoHttpView
@@ -37,12 +35,17 @@ import cn.berfy.sdk.demohttp.util.MD5
 import cn.berfy.sdk.http.HttpApi
 import cn.berfy.sdk.http.callback.HttpCallBack
 import cn.berfy.sdk.http.callback.OnStatusListener
+import cn.berfy.sdk.http.callback.RequestCallBack
+import cn.berfy.sdk.http.callback.SuperOkHttpCallBack
 import cn.berfy.sdk.http.http.okhttp.utils.GsonUtil
 import cn.berfy.sdk.http.model.HttpParams
 import cn.berfy.sdk.http.model.NetError
 import cn.berfy.sdk.http.model.NetResponse
+import cn.berfy.sdk.http.v1.HttpApiV1
 import cn.berfy.sdk.mvpbase.base.CommonActivity
+import cn.berfy.sdk.mvpbase.util.DeviceUtils
 import cn.berfy.sdk.mvpbase.util.ToastUtil
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.OnClickListener, IDemoHttpView {
 
@@ -59,15 +62,13 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
     private var mTvMd5: TextView? = null
     private var mBtnHttpGET: Button? = null
     private var mBtnHttpPOST: Button? = null
-    private var mBtnHttpRxjavaGET: Button? = null
-    private var mBtnHttpRxjavaPOST: Button? = null
     private var mTvHttp: TextView? = null
 
     private val mHandler = object : Handler() {
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
-            mWebView1!!.loadUrl("https://7fffss.bid/intr/675afe938e2b68c9")
-            mWebView2!!.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xuw4.html")
+//            mWebView1!!.loadUrl("https://jjzzz1.win/intr/64c2391c4d563ad2")
+//            mWebView2!!.loadUrl("http://blog.sina.com.cn/s/blog_472b14140102xuw4.html")
             sendEmptyMessageDelayed(0, 10000)
         }
     }
@@ -82,6 +83,17 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
 
     override fun initView() {
         showTitleBar()
+        XXPermissions.with(mContext)
+                .permission(Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        , Manifest.permission.READ_PHONE_STATE)
+                .request(object : OnPermission {
+                    override fun noPermission(denied: MutableList<String>?, quick: Boolean) {
+
+                    }
+
+                    override fun hasPermission(granted: MutableList<String>?, isAll: Boolean) {
+                    }
+                })
         titleBar.setLeftIcon(false)
         titleBar.setTitle(R.string.app_name)
         ToastUtil.init(applicationContext)
@@ -104,8 +116,6 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
         mTvHttp = findViewById(R.id.tv_response)
         mBtnHttpGET = findViewById(R.id.btn_http_get)
         mBtnHttpPOST = findViewById(R.id.btn_http_post)
-        mBtnHttpRxjavaGET = findViewById(R.id.btn_http_rxjava_get)
-        mBtnHttpRxjavaPOST = findViewById(R.id.btn_http_rxjava_post)
         mBtnAnim = findViewById(R.id.btn_anim)
         mBtnAnim!!.setOnClickListener(this)
         mBtnMd5!!.setOnClickListener(this)
@@ -115,33 +125,63 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
         mBtnMd5Base64Java!!.setOnClickListener(this)
         mBtnHttpGET!!.setOnClickListener(this)
         mBtnHttpPOST!!.setOnClickListener(this)
-        mBtnHttpRxjavaGET!!.setOnClickListener(this)
-        mBtnHttpRxjavaPOST!!.setOnClickListener(this)
+        btn_http_rxjava_get!!.setOnClickListener(this)
+        btn_http_rxjava_post!!.setOnClickListener(this)
+        btn_okgo_get!!.setOnClickListener(this)
+        btn_okgo_post!!.setOnClickListener(this)
         findViewById<View>(R.id.btn_3des).setOnClickListener(this)
         HttpApi.init(applicationContext)
         HttpApi.getInstances()
-                .setHost("http://223.203.221.49:18610/")
-                .setStatusListener(object : OnStatusListener {
-                    override fun statusCodeError(i: Int, usedTime: Long) {
+                .setHost("https://www.baidu.com/")
+                .setOnStatusListener(object : OnStatusListener {
+                    override fun statusCodeError(i: Int, errMsg: String) {
                         Log.d("httpLog", "测试  请求错误码$i")
-                        mTvHttp!!.text = "请求错误码" + i + "  耗时:" + usedTime + "ms"
+                        mTvHttp!!.text = "请求错误码$i errMsg=$errMsg"
                     }
 
                     override fun addParams(rawParams: HttpParams): HttpParams? {
-                        Log.d(HttpApi.getInstances().logTAG, "测试  请求参数  " + GsonUtil.getInstance().toJson(rawParams.params))
-                        Log.d(HttpApi.getInstances().logTAG, "测试  请求Headers  " + GsonUtil.getInstance().toJson(rawParams.headers))
-                        rawParams.putParam("sign_ts", System.currentTimeMillis().toString() + "")
-                        val headers = rawParams.params.entries.iterator()
-                        val sb = StringBuffer()
-                        while (headers.hasNext()) {
-                            val entry = headers.next()
-                            sb.append(entry.key.trim { it <= ' ' }).append("=").append(entry.value.toString())
-                        }
+                        val addParams = HttpParams()
+                        val ctx = applicationContext
+                        addParams.putParam("deviceid", DeviceUtils.getDeviceId(ctx))
+                        addParams.putParam("pid", "gloudphone")
+                        addParams.putParam("version", "3.1.6")
+                        addParams.putParam("ver", "3.1.6")
+                        addParams.putParam("hwdeviceid", DeviceUtils.getDeviceId(ctx))
+                        addParams.putParam("mode", Build.MODEL)
+                        addParams.putParam("language", "zh")
+                        return addParams
+                    }
 
-                        val httpParams1 = HttpParams()
-                        httpParams1.putParam("sign_ts", rawParams.params["ts"])
-                        httpParams1.putHeader("sign", HttpApi.getInstances().encodeMD5(false, sb.toString()))
+                    override fun receiveSetCookie(s: String) {
+
+                    }
+
+                    override fun addCookies(): HttpParams? {
                         return null
+                    }
+                })
+                .setLogTAG("httpLog")
+                .start()
+        HttpApiV1.init(applicationContext)
+        HttpApiV1.getInstances()
+                .setHost("https://www.baidu.com/")
+                .setStatusListener(object : OnStatusListener {
+                    override fun statusCodeError(i: Int, errMsg: String) {
+                        Log.d("httpLog", "测试  请求错误码$i")
+                        mTvHttp!!.text = "请求错误码$i errMsg=$errMsg"
+                    }
+
+                    override fun addParams(rawParams: HttpParams): HttpParams? {
+                        val addParams = HttpParams()
+                        val ctx = applicationContext
+                        addParams.putParam("deviceid", DeviceUtils.getDeviceId(ctx))
+                        addParams.putParam("pid", "gloudphone")
+                        addParams.putParam("version", "3.1.6")
+                        addParams.putParam("ver", "3.1.6")
+                        addParams.putParam("hwdeviceid", DeviceUtils.getDeviceId(ctx))
+                        addParams.putParam("mode", Build.MODEL)
+                        addParams.putParam("language", "zh")
+                        return addParams
                     }
 
                     override fun receiveSetCookie(s: String) {
@@ -154,6 +194,10 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
                 })
                 .setLogTAG("httpLog")
                 .finish()
+
+//        val headers = HttpHeaders()
+//        headers.put("commonHeaderKey1", "commonHeaderValue1")    //header不支持中文，不允许有特殊字符
+//        headers.put("commonHeaderKey2", "commonHeaderValue2")
         mWebView1!!.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
@@ -233,7 +277,7 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
 
                     }
                 })
-        mHandler.sendEmptyMessage(0)
+//        mHandler.sendEmptyMessage(0)
     }
 
     override fun initPresenter(): DemoHttpPresenter {
@@ -253,7 +297,7 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
             R.id.btn_md5_c -> {
                 var time = System.currentTimeMillis()
                 var md5 = mEditMd5!!.text.toString().trim { it <= ' ' }
-                mTvMd5!!.text = HttpApi.getInstances().encodeMD5(true, md5) + "  耗时:" + (System.currentTimeMillis() - time) + "ms"
+                mTvMd5!!.text = HttpApiV1.getInstances().encodeMD5(true, md5) + "  耗时:" + (System.currentTimeMillis() - time) + "ms"
             }
             R.id.btn_md5_java -> {
                 var time = System.currentTimeMillis()
@@ -268,7 +312,7 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
             R.id.btn_md5_base64 -> {
                 var time = System.currentTimeMillis()
                 var md5 = mEditMd5!!.text.toString().trim { it <= ' ' }
-                mTvMd5!!.text = HttpApi.getInstances().encodeBase64(md5) + "  耗时:" + (System.currentTimeMillis() - time) + "ms"
+                mTvMd5!!.text = HttpApiV1.getInstances().encodeBase64(md5) + "  耗时:" + (System.currentTimeMillis() - time) + "ms"
             }
             R.id.btn_md5_base64_java -> {
                 var time = System.currentTimeMillis()
@@ -283,29 +327,25 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
             R.id.btn_3des -> {
                 var time = System.currentTimeMillis()
                 var md5 = mEditMd5!!.text.toString().trim { it <= ' ' }
-                mTvMd5!!.text = HttpApi.getInstances().encode3Des(md5) + "  耗时:" + (System.currentTimeMillis() - time) + "ms"
+                mTvMd5!!.text = HttpApiV1.getInstances().encode3Des(md5) + "  耗时:" + (System.currentTimeMillis() - time) + "ms"
             }
             R.id.btn_http_get -> {
                 var httpParams = HttpParams()
-                httpParams.putParam("a", 1)
-                httpParams.putParam("b", 2)
-                httpParams.putHeader("hearfer", 1)
-                HttpApi.getInstances().get("", httpParams, object : HttpCallBack {
+                httpParams.putParam("m", "AsherBanner")
+                httpParams.putParam("a", "get_asher_banner_tabs")
+                HttpApiV1.getInstances().get("https://b2.51ias.com/", "api.php", httpParams,
+                        object : SuperOkHttpCallBack<HomeTabsBean>(
+                                object : RequestCallBack<HomeTabsBean> {
+                                    override fun onStart() {
+                                    }
 
-                    override fun onStart() {
-                        Log.d("请求开始", "===")
-                    }
+                                    override fun onFinish(response: NetResponse<HomeTabsBean>?) {
+                                        mTvHttp!!.text = "${response!!.data.ret}:${response!!.data.msg}"
+                                    }
 
-                    override fun onFinish(netResponse: NetResponse<String>) {
-                        Log.d("返回成功", "statusCode = " + netResponse.statusCode + " 返回值" + netResponse.data + " 耗时:" + netResponse.usedTime + "ms")
-                        mTvHttp!!.text = netResponse.data + " 耗时:" + netResponse.usedTime + "ms"
-                    }
-
-                    override fun onError(netError: NetError) {
-                        Log.d("返回错误", "statusCode = " + netError.statusCode + " 错误信息" + netError.errMsg + " 耗时:" + netError.usedTime + "ms")
-                        mTvHttp!!.text = netError.errMsg + " 耗时:" + netError.usedTime + "ms"
-                    }
-                })
+                                    override fun onError(error: NetError?) {
+                                    }
+                                }) {}, true)
             }
             R.id.btn_http_post -> {
                 var httpParams = HttpParams()
@@ -320,13 +360,13 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
                     }
 
                     override fun onFinish(netResponse: NetResponse<String>) {
-                        Log.d("返回成功", "statusCode = " + netResponse.statusCode + " 返回值" + netResponse.data + " 耗时:" + netResponse.usedTime + "ms")
-                        mTvHttp!!.text = netResponse.data + " 耗时:" + netResponse.usedTime + "ms"
+                        Log.d("返回成功", "statusCode = " + netResponse.statusCode + " 返回值" + netResponse.data)
+                        mTvHttp!!.text = netResponse.data
                     }
 
                     override fun onError(netError: NetError) {
-                        Log.d("返回错误", "statusCode = " + netError.statusCode + " 错误信息" + netError.errMsg + " 耗时:" + netError.usedTime + "ms")
-                        mTvHttp!!.text = netError.errMsg + " 耗时:" + netError.usedTime + "ms"
+                        Log.d("返回错误", "statusCode = " + netError.statusCode + " 错误信息" + netError.errMsg)
+                        mTvHttp!!.text = netError.errMsg
                     }
                 })
             }
@@ -339,7 +379,7 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
                 mWaterWaveView!!.visibility = View.VISIBLE
                 mWaterWaveView!!.startWave()
             }
-            R.id.btn_http_rxjava_get -> presenter.checkUpdate("1.4.6", object : rx.Observer<Data<*>> {
+            R.id.btn_http_rxjava_get -> presenter.checkUpdate("1.4.6", object : rx.Observer<Data> {
                 override fun onCompleted() {}
 
                 override fun onError(e: Throwable) {
@@ -347,9 +387,10 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
                     ToastUtil.getInstances().showShort(e.message)
                 }
 
-                override fun onNext(book: Data<*>?) {
+                override fun onNext(book: Data?) {
                     if (null != book) {
                         ToastUtil.getInstances().showShort("获取成功" + GsonUtil.getInstance().toJson(book))
+                        mTvHttp!!.text = GsonUtil.getInstance().toJson(book)
                     } else {
                         ToastUtil.getInstances().showShort("获取成功book=null")
                     }
@@ -366,11 +407,47 @@ class MainActivity : CommonActivity<IDemoHttpView, DemoHttpPresenter>(), View.On
                 override fun onNext(book: Book?) {
                     if (null != book) {
                         ToastUtil.getInstances().showShort("获取成功" + GsonUtil.getInstance().toJson(book))
+                        mTvHttp!!.text = GsonUtil.getInstance().toJson(book)
                     } else {
                         ToastUtil.getInstances().showShort("获取成功book=null")
                     }
                 }
             })
+            R.id.btn_okgo_get -> {
+                HttpApi.getInstances().get("https://b2.51ias.com/", "api.php")
+                        .param("m", "AsherBanner")
+                        .param("a", "get_asher_banner_tabs")
+                        .callBack(object : SuperOkHttpCallBack<HomeTabsBean>(object : RequestCallBack<HomeTabsBean> {
+                            override fun onStart() {
+
+                            }
+
+                            override fun onFinish(response: NetResponse<HomeTabsBean>?) {
+                                mTvHttp!!.text = "${response!!.data.ret}:${response!!.data.msg}"
+                            }
+
+                            override fun onError(error: NetError?) {
+                            }
+                        }) {})
+            }
+            R.id.btn_okgo_post -> {
+                HttpApi.getInstances().post("https://b2.51ias.com/api.php")
+                        .param("m", "AsherBanner")
+                        .param("a", "get_asher_banner_tabs")
+                        .callBack(object : SuperOkHttpCallBack<HomeTabsBean>(object : RequestCallBack<HomeTabsBean> {
+                            override fun onStart() {
+
+                            }
+
+                            override fun onFinish(response: NetResponse<HomeTabsBean>?) {
+                                mTvHttp!!.text = GsonUtil.getInstance().toJson(response!!.data)
+                            }
+
+                            override fun onError(error: NetError?) {
+                                mTvHttp!!.text = GsonUtil.getInstance().toJson(error)
+                            }
+                        }) {})
+            }
         }
     }
 
