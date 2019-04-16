@@ -28,7 +28,7 @@ Java_cn_berfy_sdk_http_demo_HttpDemo_stringFromJNI1(
 
 JNIEXPORT  jstring
 JNICALL
-Java_cn_berfy_sdk_http_HttpApi_encodeMd5JNI(JNIEnv *env, jobject, jboolean isUpper, jstring str) {
+Java_cn_berfy_sdk_http_v1_HttpApiV1_encodeMd5JNI(JNIEnv *env, jobject, jboolean isUpper, jstring str) {
     const char *originStr;
     //将jstring转化成char *类型
     originStr = env->GetStringUTFChars(str, false);
@@ -44,7 +44,7 @@ Java_cn_berfy_sdk_http_HttpApi_encodeMd5JNI(JNIEnv *env, jobject, jboolean isUpp
 
 JNIEXPORT  jstring
 JNICALL
-Java_cn_berfy_sdk_http_HttpApi_encodeBase64JNI(JNIEnv *env, jobject, jstring str) {
+Java_cn_berfy_sdk_http_v1_HttpApiV1_encodeBase64JNI(JNIEnv *env, jobject, jstring str) {
     //base64加密后字符串指针
     unsigned char *base64String;
     //接收java端字符串 jstring转换成c++ byte
@@ -59,7 +59,7 @@ Java_cn_berfy_sdk_http_HttpApi_encodeBase64JNI(JNIEnv *env, jobject, jstring str
 
 JNIEXPORT  jstring
 JNICALL
-Java_cn_berfy_sdk_http_HttpApi_decodeBase64JNI(JNIEnv *env, jobject, jstring str) {
+Java_cn_berfy_sdk_http_v1_HttpApiV1_decodeBase64JNI(JNIEnv *env, jobject, jstring str) {
     //base64加密后字符串指针
     const char *base64String;
     //接收java端字符串
@@ -94,7 +94,7 @@ char *ConvertJByteaArrayToChars(JNIEnv *env, jbyteArray bytearray) {
  */
 /*********************3DES加密*********************/
 JNIEXPORT jint JNICALL
-Java_cn_berfy_sdk_http_HttpApi_encode3DES(JNIEnv *env, jobject, jbyteArray msg,
+Java_cn_berfy_sdk_http_v1_HttpApiV1_encode3DESJNI(JNIEnv *env, jobject, jbyteArray msg,
                                            jbyteArray key, jbyteArray cipher) {
     jbyte *pMsg = (jbyte *) env->GetByteArrayElements(msg, 0);
     jbyte *pKey = (jbyte *) env->GetByteArrayElements(key, 0);
@@ -113,7 +113,7 @@ Java_cn_berfy_sdk_http_HttpApi_encode3DES(JNIEnv *env, jobject, jbyteArray msg,
 
 /*********************3DES解密*********************/
 JNIEXPORT jint JNICALL
-Java_cn_berfy_sdk_http_HttpApi_decode3DES(JNIEnv *env, jobject, jbyteArray cipher,
+Java_cn_berfy_sdk_http_v1_HttpApiV1_decode3DESJNI(JNIEnv *env, jobject, jbyteArray cipher,
                                            jbyteArray key,
                                            jbyteArray result) {
     jbyte *pCipher = (jbyte *) env->GetByteArrayElements(cipher, 0);
@@ -134,7 +134,7 @@ Java_cn_berfy_sdk_http_HttpApi_decode3DES(JNIEnv *env, jobject, jbyteArray ciphe
 /**获取DES key*/
 JNIEXPORT jstring
 JNICALL
-Java_cn_berfy_sdk_http_HttpApi_getDesKey(JNIEnv *env ,jobject){
+Java_cn_berfy_sdk_http_v1_HttpApiV1_getDesKey(JNIEnv *env ,jobject){
     std::string key = "12345678";
     return env->NewStringUTF(key.c_str());
 }
@@ -142,7 +142,7 @@ Java_cn_berfy_sdk_http_HttpApi_getDesKey(JNIEnv *env ,jobject){
 /**获取DES key*/
 JNIEXPORT jstring
 JNICALL
-Java_cn_berfy_sdk_http_HttpApi_get3DesKey(JNIEnv *env ,jobject){
+Java_cn_berfy_sdk_http_v1_HttpApiV1_get3DesKey(JNIEnv *env ,jobject){
     std::string key = "0535YANTAIJIANWA0535YANTAIJIANWA";
     return env->NewStringUTF(key.c_str());
 }
@@ -150,7 +150,7 @@ Java_cn_berfy_sdk_http_HttpApi_get3DesKey(JNIEnv *env ,jobject){
 /**获取DES key*/
 JNIEXPORT jstring
 JNICALL
-Java_cn_berfy_sdk_http_HttpApi_getDesCipher(JNIEnv *env ,jobject){
+Java_cn_berfy_sdk_http_v1_HttpApiV1_getDesCipher(JNIEnv *env ,jobject){
     std::string cipher = "DES";
     return env->NewStringUTF(cipher.c_str());
 }

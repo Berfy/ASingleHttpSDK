@@ -722,7 +722,7 @@ public class HttpApiV1 {
 
     //加载so库
     static {
-        System.loadLibrary("httpjni");
+        System.loadLibrary("httpjni-lib");
     }
 
     //md5加密
@@ -735,10 +735,10 @@ public class HttpApiV1 {
     private static native String decodeBase64JNI(String base64);
 
     //DES加密
-//    public static native int encode3DES(byte[] aes, byte[] key, byte[] py);
+    public static native int encode3DESJNI(byte[] aes, byte[] key, byte[] py);
 
     //DES解密
-//    public static native int decode3DES(byte[] key, byte[] py, byte[] result);
+    public static native int decode3DESJNI(byte[] key, byte[] py, byte[] result);
 
     //获取DES key
     private static native String getDesKey();

@@ -15,16 +15,16 @@ INCLUDE_DIRECTORIES(
 LINK_DIRECTORIES()
 
 add_library( # Sets the name of the library.
-             httpjni
+        httpjni-lib
 
-             # Sets the library as a shared library.
-             SHARED
+        # Sets the library as a shared library.
+        SHARED
 
-             # Provides a relative path to your source file(s).
-             src/main/cpp/httpjni.cpp
-             src/main/cpp/MD5.cpp
-             src/main/cpp/base64.cpp
-             src/main/cpp/3des.cpp)
+        # Provides a relative path to your source file(s).
+        src/main/cpp/httpjni.cpp
+        src/main/cpp/MD5.cpp
+        src/main/cpp/base64.cpp
+        src/main/cpp/3des.cpp)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -32,14 +32,15 @@ add_library( # Sets the name of the library.
 # you want to add. CMake verifies that the library exists before
 # completing its build.
 find_library( # Sets the name of the path variable.
-              log-lib
+        httpjni-lib
+        log-lib
 
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              log )
+        # Specifies the name of the NDK library that
+        # you want CMake to locate.
+        log)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
 
-TARGET_LINK_LIBRARIES( httpjni ${log-lib}) # 链接动态库
+TARGET_LINK_LIBRARIES(httpjni-lib ${log-lib}) # 链接动态库
